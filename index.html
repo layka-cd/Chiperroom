@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIPHERROOM</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #16121B; --panel: #1E1826; --panel-2: #241D2E; --line: #34293F;
+    --brass: #E3B23C; --brass-dim: #9C7C2E; --sage: #7FA893; --rust: #C15C4A;
+    --ink: #EDE6DA; --ink-dim: #948AA0;
+    --mono-ui: 'JetBrains Mono', monospace; --mono-display: 'Space Mono', monospace; --sans: 'Inter', sans-serif;
+  }
+  *{ box-sizing: border-box; }
+  html, body{ margin:0; padding:0; height:100%; background: var(--bg); color: var(--ink); font-family: var(--sans); overflow: hidden; }
+  body{ background-image: radial-gradient(circle at 15% 10%, rgba(227,178,60,0.05), transparent 40%), radial-gradient(circle at 90% 80%, rgba(127,168,147,0.04), transparent 45%); }
+  ::selection{ background: var(--brass); color: #16121B; }
+  #app{ height:100vh; width:100vw; display:flex; }
+  .hidden{ display:none !important; }
+  #join-screen{ flex: 1; display:flex; align-items:center; justify-content:center; padding: 24px; }
+  .join-card{ width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 36px 32px 30px; position: relative; overflow: hidden; }
+  .join-card::before{ content:""; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, transparent, var(--brass), transparent); }
+  .brand{ display:flex; align-items:center; gap:12px; margin-bottom: 6px; }
+  .cipher-wheel{ width: 34px; height: 34px; flex-shrink:0; }
+  .brand-name{ font-family: var(--mono-display); font-size: 20px; letter-spacing: 2px; font-weight:700; color: var(--ink); }
+  .brand-name span{ color: var(--brass); }
+  .brand-sub{ font-family: var(--mono-ui); font-size: 11px; letter-spacing: 1.5px; color: var(--ink-dim); margin: 4px 0 28px 46px; text-transform: uppercase; }
+  .field{ margin-bottom: 18px; }
+  .field label{ display:block; font-family: var(--mono-ui); font-size: 10.5px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 7px; }
+  .field input{ width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; color: var(--ink); font-family: var(--mono-ui); font-size: 14.5px; letter-spacing: 0.5px; outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+  .field input::placeholder{ color: #524A5E; }
+  .field input:focus{ border-color: var(--brass-dim); box-shadow: 0 0 0 3px rgba(227,178,60,0.08); }
+  .field-hint{ font-family: var(--mono-ui); font-size: 10.5px; color: var(--ink-dim); margin-top: 7px; line-height: 1.5; }
+  .join-btn{ width:100%; margin-top: 8px; background: var(--brass); color: #1B1408; border: none; border-radius: 6px; padding: 13px; font-family: var(--mono-ui); font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: transform 0.1s ease, background 0.15s ease; }
+  .join-btn:hover{ background: #EEC050; }
+  .join-btn:active{ transform: scale(0.98); }
+  .join-btn:disabled{ opacity: 0.5; cursor: not-allowed; }
+  .join-error{ font-family: var(--mono-ui); font-size: 11.5px; color: var(--rust); margin-top: 14px; min-height: 14px; }
+  #chat-screen{ flex:1; display:flex; min-width:0; }
+  .sidebar{ width: 250px; flex-shrink:0; background: var(--panel); border-right: 1px solid var(--line); display:flex; flex-direction:column; padding: 20px 18px; }
+  .sidebar .brand{ margin-bottom: 24px; }
+  .sidebar .brand-name{ font-size: 16px; }
+  .cipher-wheel-small{ width: 24px; height:24px; }
+  .side-block{ margin-bottom: 22px; }
+  .side-label{ font-family: var(--mono-ui); font-size: 10px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 8px; }
+  .room-code-display{ font-family: var(--mono-display); font-size: 21px; color: var(--brass); letter-spacing: 1px; word-break: break-all; }
+  .status-line{ display:flex; align-items:center; gap: 7px; font-family: var(--mono-ui); font-size: 11.5px; color: var(--sage); margin-top: 6px; }
+  .dot{ width:7px; height:7px; border-radius:50%; background: var(--sage); box-shadow: 0 0 6px var(--sage); }
+  .member-list{ display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; }
+  .member-row{ display:flex; align-items:center; gap:9px; font-family: var(--mono-ui); font-size: 12.5px; color: var(--ink); }
+  .member-dot{ width:6px; height:6px; border-radius:50%; background: var(--sage); flex-shrink:0; }
+  .member-you{ font-size: 9.5px; color: var(--brass); border: 1px solid var(--brass-dim); padding: 1px 6px; border-radius: 3px; letter-spacing: 1px; margin-left: auto; }
+  .leave-btn{ background: transparent; border: 1px solid var(--line); color: var(--ink-dim); font-family: var(--mono-ui); font-size: 11px; letter-spacing: 1px; padding: 10px; border-radius: 6px; cursor: pointer; margin-top: auto; transition: border-color 0.15s ease, color 0.15s ease; }
+  .leave-btn:hover{ border-color: var(--rust); color: var(--rust); }
+  .chat-main{ flex:1; display:flex; flex-direction:column; min-width:0; }
+  .chat-header{ height: 56px; flex-shrink:0; border-bottom: 1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding: 0 22px; }
+  .chat-header-title{ font-family: var(--mono-ui); font-size: 12px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; }
+  .chat-header-title b{ color: var(--brass); font-weight: 600; }
+  .header-actions{ display:flex; gap: 10px; }
+  .icon-btn{ background: transparent; border: 1px solid var(--line); color: var(--ink-dim); font-family: var(--mono-ui); font-size: 10.5px; letter-spacing: 1px; padding: 6px 11px; border-radius: 5px; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
+  .icon-btn:hover{ border-color: var(--ink-dim); color: var(--ink); }
+  .messages{ flex:1; overflow-y:auto; padding: 26px 28px; display:flex; flex-direction:column; gap: 4px; }
+  .msg-empty{ margin: auto; text-align:center; font-family: var(--mono-ui); font-size: 12px; color: var(--ink-dim); letter-spacing: 1px; }
+  .msg-empty .wheel-mini{ width: 40px; height:40px; margin: 0 auto 14px; opacity: 0.6; }
+  .msg-row{ display:flex; margin: 7px 0; max-width: 72%; }
+  .msg-row.mine{ align-self: flex-end; flex-direction: row-reverse; }
+  .msg-row.system{ align-self:center; max-width: 90%; }
+  .msg-bubble{ background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 13px; }
+  .msg-row.mine .msg-bubble{ background: rgba(227,178,60,0.1); border-color: rgba(227,178,60,0.35); }
+  .msg-row.system .msg-bubble{ background: transparent; border: 1px dashed var(--line); font-family: var(--mono-ui); font-size: 11px; color: var(--ink-dim); letter-spacing: 0.5px; padding: 5px 12px; }
+  .msg-meta{ font-family: var(--mono-ui); font-size: 10.5px; color: var(--brass); letter-spacing: 0.5px; margin-bottom: 3px; display:flex; gap:8px; }
+  .msg-row.mine .msg-meta{ color: var(--sage); flex-direction: row-reverse; }
+  .msg-meta .time{ color: var(--ink-dim); }
+  .msg-text{ font-size: 14px; line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
+  .composer{ border-top: 1px solid var(--line); padding: 16px 22px 20px; display:flex; gap: 10px; flex-shrink:0; }
+  .composer input{ flex:1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 15px; color: var(--ink); font-family: var(--sans); font-size: 14px; outline:none; transition: border-color 0.15s ease; }
+  .composer input:focus{ border-color: var(--brass-dim); }
+  .send-btn{ background: var(--brass); border:none; border-radius:8px; width: 46px; color: #1B1408; cursor:pointer; font-size: 16px; display:flex; align-items:center; justify-content:center; transition: background 0.15s ease, transform 0.1s ease; }
+  .send-btn:hover{ background: #EEC050; }
+  .send-btn:active{ transform: scale(0.95); }
+  .lock-note{ font-family: var(--mono-ui); font-size: 9.5px; color: var(--ink-dim); letter-spacing: 0.5px; padding: 0 22px 12px; margin-top: -8px; display:flex; align-items:center; gap:6px; }
+  .conn-note{ font-family: var(--mono-ui); font-size: 9.5px; letter-spacing: 0.5px; }
+  .conn-note.ok{ color: var(--sage); }
+  .conn-note.bad{ color: var(--rust); }
+  ::-webkit-scrollbar{ width: 8px; }
+  ::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 4px; }
+  ::-webkit-scrollbar-track{ background: transparent; }
+  @media (prefers-reduced-motion: reduce){ .cipher-wheel, .cipher-wheel-small, .wheel-mini { animation: none !important; } }
+  .cipher-wheel .rotor, .cipher-wheel-small .rotor, .wheel-mini .rotor{ animation: spin 12s linear infinite; transform-origin: 50% 50%; }
+  @keyframes spin{ from{ transform: rotate(0deg);} to{ transform: rotate(360deg);} }
+  @media (max-width: 720px){ .sidebar{ display:none; } .messages{ padding: 18px; } .composer{ padding: 12px 14px 16px; } }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="join-screen">
+    <div class="join-card">
+      <div class="brand">
+        <svg class="cipher-wheel" viewBox="0 0 40 40">
+          <g class="rotor">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="#E3B23C" stroke-width="1.4" stroke-dasharray="2 4"/>
+            <circle cx="20" cy="20" r="11" fill="none" stroke="#7FA893" stroke-width="1.2"/>
+            <line x1="20" y1="3" x2="20" y2="9" stroke="#E3B23C" stroke-width="1.6"/>
+          </g>
+          <circle cx="20" cy="20" r="3" fill="#E3B23C"/>
+        </svg>
+        <div class="brand-name">CIPHER<span>ROOM</span></div>
+      </div>
+      <div class="brand-sub">real-time · room-keyed · end-to-end</div>
+
+      <div class="field">
+        <label>Nama panggilan</label>
+        <input id="input-username" type="text" placeholder="mis. X" maxlength="20" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Kode ruang</label>
+        <input id="input-roomcode" type="text" placeholder="mis. 4444 atau kata sandi apa saja" maxlength="64" autocomplete="off">
+        <div class="field-hint">Kode ini tidak pernah dikirim ke server dalam bentuk asli. Browser menurunkan dua nilai darinya: sebuah ID ruang (hash satu-arah, untuk server tahu siapa gabung ke siapa) dan kunci enkripsi (tidak pernah meninggalkan perangkatmu).</div>
+      </div>
+
+      <button class="join-btn" id="btn-join">Masuk Ruang</button>
+      <div class="join-error" id="join-error"></div>
+    </div>
+  </div>
+
+  <div id="chat-screen" class="hidden">
+    <div class="sidebar">
+      <div class="brand">
+        <svg class="cipher-wheel-small" viewBox="0 0 40 40">
+          <g class="rotor">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="#E3B23C" stroke-width="1.4" stroke-dasharray="2 4"/>
+            <circle cx="20" cy="20" r="11" fill="none" stroke="#7FA893" stroke-width="1.2"/>
+            <line x1="20" y1="3" x2="20" y2="9" stroke="#E3B23C" stroke-width="1.6"/>
+          </g>
+          <circle cx="20" cy="20" r="3" fill="#E3B23C"/>
+        </svg>
+        <div class="brand-name">CIPHER<span>ROOM</span></div>
+      </div>
+
+      <div class="side-block">
+        <div class="side-label">Ruang</div>
+        <div class="room-code-display" id="side-roomcode">—</div>
+        <div class="status-line"><div class="dot"></div><span id="side-online-count">1 online</span></div>
+      </div>
+
+      <div class="side-block" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+        <div class="side-label">Anggota</div>
+        <div class="member-list" id="member-list"></div>
+      </div>
+
+      <div class="conn-note ok" id="conn-note" style="margin-bottom:10px;">● terhubung</div>
+      <button class="leave-btn" id="btn-leave">← Keluar Ruang</button>
+    </div>
+
+    <div class="chat-main">
+      <div class="chat-header">
+        <div class="chat-header-title">RUANG // <b id="header-roomcode">—</b></div>
+        <div class="header-actions">
+          <button class="icon-btn" id="btn-clear">Bersihkan tampilan</button>
+        </div>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="msg-empty">
+          <svg class="wheel-mini" viewBox="0 0 40 40">
+            <g class="rotor">
+              <circle cx="20" cy="20" r="17" fill="none" stroke="#948AA0" stroke-width="1.4" stroke-dasharray="2 4"/>
+              <circle cx="20" cy="20" r="11" fill="none" stroke="#948AA0" stroke-width="1.2"/>
+              <line x1="20" y1="3" x2="20" y2="9" stroke="#948AA0" stroke-width="1.6"/>
+            </g>
+            <circle cx="20" cy="20" r="3" fill="#948AA0"/>
+          </svg>
+          — Awal percakapan —
+        </div>
+      </div>
+
+      <div class="lock-note">🔒 Dienkripsi AES-GCM di perangkatmu sebelum dikirim. Server hanya meneruskan ciphertext, tidak menyimpannya ke disk.</div>
+      <div class="composer">
+        <input id="input-message" type="text" placeholder="Ketik pesan…" autocomplete="off">
+        <button class="send-btn" id="btn-send">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  let username = "";
+  let roomCode = "";
+  let roomId = "";       // SHA-256(roomCode + ":id") -> sent to server, identifies the channel
+  let roomKey = null;    // AES-GCM key derived separately -> never sent anywhere
+  let socket = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------------- Crypto ----------------
+  async function sha256Hex(text){
+    const enc = new TextEncoder();
+    const digest = await crypto.subtle.digest("SHA-256", enc.encode(text));
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2,"0")).join("");
+  }
+
+  async function deriveRoomKey(code){
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: enc.encode("cipherroom-enc-v1"), iterations: 150000, hash: "SHA-256" },
+      baseKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+    );
+  }
+
+  function bufToB64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+  function b64ToBuf(b64){
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    return arr.buffer;
+  }
+
+  async function encryptPayload(obj){
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const enc = new TextEncoder();
+    const cipher = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, roomKey, enc.encode(JSON.stringify(obj)));
+    return { iv: bufToB64(iv), ct: bufToB64(cipher) };
+  }
+
+  async function decryptPayload(entry){
+    try{
+      const iv = new Uint8Array(b64ToBuf(entry.iv));
+      const plainBuf = await crypto.subtle.decrypt({ name:"AES-GCM", iv }, roomKey, b64ToBuf(entry.ct));
+      return JSON.parse(new TextDecoder().decode(plainBuf));
+    }catch(e){ return null; }
+  }
+
+  // ---------------- UI helpers ----------------
+  function formatTime(ts){
+    const d = new Date(ts);
+    return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
+  }
+
+  function clearEmptyState(){
+    const empty = document.querySelector(".msg-empty");
+    if(empty) empty.remove();
+  }
+
+  function renderMessage(msg){
+    const wrap = document.createElement("div");
+    if(msg.system){
+      wrap.className = "msg-row system";
+      const bubble = document.createElement("div");
+      bubble.className = "msg-bubble";
+      bubble.textContent = msg.text;
+      wrap.appendChild(bubble);
+      return wrap;
+    }
+    const mine = msg.user === username;
+    wrap.className = "msg-row" + (mine ? " mine" : "");
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    const meta = document.createElement("div");
+    meta.className = "msg-meta";
+    const nameSpan = document.createElement("span"); nameSpan.textContent = msg.user;
+    const timeSpan = document.createElement("span"); timeSpan.className = "time"; timeSpan.textContent = formatTime(msg.ts);
+    meta.appendChild(nameSpan); meta.appendChild(timeSpan);
+    const textDiv = document.createElement("div");
+    textDiv.className = "msg-text"; textDiv.textContent = msg.text;
+    bubble.appendChild(meta); bubble.appendChild(textDiv);
+    wrap.appendChild(bubble);
+    return wrap;
+  }
+
+  function appendMessage(msg){
+    clearEmptyState();
+    const container = $("messages");
+    container.appendChild(renderMessage(msg));
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function renderMembers(members){
+    $("side-online-count").textContent = members.length + " online";
+    const list = $("member-list");
+    list.innerHTML = "";
+    [...members].sort().forEach(name => {
+      const row = document.createElement("div");
+      row.className = "member-row";
+      const dot = document.createElement("div"); dot.className = "member-dot";
+      row.appendChild(dot);
+      const label = document.createElement("span"); label.textContent = name;
+      row.appendChild(label);
+      if(name === username){
+        const you = document.createElement("span"); you.className = "member-you"; you.textContent = "kamu";
+        row.appendChild(you);
+      }
+      list.appendChild(row);
+    });
+  }
+
+  // ---------------- Actions ----------------
+  async function joinRoom(){
+    const uInput = $("input-username").value.trim();
+    const rInput = $("input-roomcode").value.trim();
+    const errorEl = $("join-error");
+    errorEl.textContent = "";
+
+    if(!uInput){ errorEl.textContent = "Isi nama panggilan dulu."; return; }
+    if(!rInput){ errorEl.textContent = "Isi kode ruang dulu."; return; }
+
+    $("btn-join").disabled = true;
+    $("btn-join").textContent = "Menurunkan kunci…";
+
+    username = uInput;
+    roomCode = rInput;
+
+    try{
+      roomId = await sha256Hex(roomCode + ":id");
+      roomKey = await deriveRoomKey(roomCode);
+    }catch(e){
+      errorEl.textContent = "Gagal menyiapkan enkripsi di browser ini.";
+      $("btn-join").disabled = false;
+      $("btn-join").textContent = "Masuk Ruang";
+      return;
+    }
+
+    socket = io({ transports: ["websocket", "polling"] });
+
+    socket.on("connect", () => {
+      socket.emit("join", { roomId, username }, async (res) => {
+        if(!res || !res.ok){
+          errorEl.textContent = res && res.error === "room_full" ? "Ruang penuh." : "Gagal bergabung ke server.";
+          $("btn-join").disabled = false;
+          $("btn-join").textContent = "Masuk Ruang";
+          socket.disconnect();
+          return;
+        }
+
+        $("join-screen").classList.add("hidden");
+        $("chat-screen").classList.remove("hidden");
+        $("side-roomcode").textContent = roomCode;
+        $("header-roomcode").textContent = roomCode;
+
+        renderMembers(res.members.includes(username) ? res.members : [...res.members, username]);
+
+        for(const entry of res.recent){
+          const payload = await decryptPayload(entry);
+          if(payload) appendMessage(payload);
+        }
+      });
+    });
+
+    socket.on("presence", ({ members }) => renderMembers(members));
+
+    socket.on("message", async (entry) => {
+      const payload = await decryptPayload(entry);
+      if(payload) appendMessage(payload);
+    });
+
+    socket.on("disconnect", () => {
+      $("conn-note").textContent = "● terputus, mencoba lagi…";
+      $("conn-note").className = "conn-note bad";
+    });
+    socket.on("connect", () => {
+      $("conn-note").textContent = "● terhubung";
+      $("conn-note").className = "conn-note ok";
+    });
+  }
+
+  async function sendMessage(text){
+    if(!text.trim() || !socket) return;
+    const payload = { user: username, text: text.trim(), ts: Date.now() };
+    const enc = await encryptPayload(payload);
+    socket.emit("message", enc);
+  }
+
+  function leaveRoom(){
+    if(socket){ socket.emit("leave"); socket.disconnect(); socket = null; }
+    $("chat-screen").classList.add("hidden");
+    $("join-screen").classList.remove("hidden");
+    $("btn-join").disabled = false;
+    $("btn-join").textContent = "Masuk Ruang";
+    $("input-roomcode").value = "";
+    $("messages").innerHTML = '<div class="msg-empty"><svg class="wheel-mini" viewBox="0 0 40 40"><g class="rotor"><circle cx="20" cy="20" r="17" fill="none" stroke="#948AA0" stroke-width="1.4" stroke-dasharray="2 4"/><circle cx="20" cy="20" r="11" fill="none" stroke="#948AA0" stroke-width="1.2"/><line x1="20" y1="3" x2="20" y2="9" stroke="#948AA0" stroke-width="1.6"/></g><circle cx="20" cy="20" r="3" fill="#948AA0"/></svg>— Awal percakapan —</div>';
+  }
+
+  // ---------------- Wire up ----------------
+  $("btn-join").addEventListener("click", joinRoom);
+  $("input-username").addEventListener("keydown", (e) => { if(e.key === "Enter") $("input-roomcode").focus(); });
+  $("input-roomcode").addEventListener("keydown", (e) => { if(e.key === "Enter") joinRoom(); });
+  $("btn-leave").addEventListener("click", leaveRoom);
+  $("btn-clear").addEventListener("click", () => {
+    $("messages").innerHTML = '<div class="msg-empty"><svg class="wheel-mini" viewBox="0 0 40 40"><g class="rotor"><circle cx="20" cy="20" r="17" fill="none" stroke="#948AA0" stroke-width="1.4" stroke-dasharray="2 4"/><circle cx="20" cy="20" r="11" fill="none" stroke="#948AA0" stroke-width="1.2"/><line x1="20" y1="3" x2="20" y2="9" stroke="#948AA0" stroke-width="1.6"/></g><circle cx="20" cy="20" r="3" fill="#948AA0"/></svg>— Awal percakapan (tampilan lokal dibersihkan) —</div>';
+  });
+  $("btn-send").addEventListener("click", () => {
+    const input = $("input-message");
+    sendMessage(input.value);
+    input.value = "";
+    input.focus();
+  });
+  $("input-message").addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){
+      const input = $("input-message");
+      sendMessage(input.value);
+      input.value = "";
+    }
+  });
+})();
+</script>
+</body>
+</html>
