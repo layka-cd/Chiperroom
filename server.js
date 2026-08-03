@@ -8,7 +8,7 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "https://chiperroom.up.railway.app/" }, // tighten this to your own domain once deployed
+  cors: { origin: "https://chiperroom.onrender.com//" }, // tighten this to your own domain once deployed
   maxHttpBufferSize: 64 * 1024 // 64KB cap per event, plenty for chat messages
 });
 
