@@ -15,6 +15,23 @@
     --ink: #EDE6DA; --ink-dim: #948AA0;
     --mono-ui: 'JetBrains Mono', monospace; --mono-display: 'Space Mono', monospace; --sans: 'Inter', sans-serif;
   }
+  html[data-theme="light"]{
+    --bg: #F3EEE3; --panel: #FFFFFF; --panel-2: #F1EBDC; --line: #DED2B8;
+    --brass: #B8842A; --brass-dim: #8C6620; --sage: #4F7C67; --rust: #A8453A;
+    --ink: #2A2430; --ink-dim: #75697F;
+  }
+  html, body, #app, .join-card, .sidebar, .chat-main, .msg-bubble, .field input, .composer input{
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
+  .theme-toggle{
+    position: fixed; top: 16px; right: 16px; z-index: 50;
+    width: 38px; height: 38px; border-radius: 8px;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+    font-size: 16px; cursor: pointer; display:flex; align-items:center; justify-content:center;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  }
+  .theme-toggle:hover{ border-color: var(--brass-dim); }
+  .theme-toggle:active{ transform: scale(0.93); }
   *{ box-sizing: border-box; }
   html, body{ margin:0; padding:0; height:100%; background: var(--bg); color: var(--ink); font-family: var(--sans); overflow: hidden; }
   body{ background-image: radial-gradient(circle at 15% 10%, rgba(227,178,60,0.05), transparent 40%), radial-gradient(circle at 90% 80%, rgba(127,168,147,0.04), transparent 45%); }
@@ -98,6 +115,8 @@
 </style>
 </head>
 <body>
+
+<button class="theme-toggle" id="theme-toggle" title="Ganti tema" aria-label="Ganti tema terang/gelap">🌙</button>
 
 <div id="app">
   <div id="join-screen">
@@ -194,6 +213,23 @@
 <script>
 (function(){
   "use strict";
+
+  // ---------------- Theme ----------------
+  function applyTheme(theme){
+    document.documentElement.setAttribute("data-theme", theme);
+    try{ localStorage.setItem("cr-theme", theme); }catch(e){ /* ignore */ }
+    const btn = document.getElementById("theme-toggle");
+    if(btn) btn.textContent = theme === "light" ? "🌙" : "☀️";
+  }
+  (function initTheme(){
+    let saved = "dark";
+    try{ saved = localStorage.getItem("cr-theme") || "dark"; }catch(e){ /* ignore */ }
+    applyTheme(saved);
+  })();
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    applyTheme(current === "light" ? "dark" : "light");
+  });
 
   let username = "";
   let roomCode = "";
