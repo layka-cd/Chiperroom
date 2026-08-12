@@ -45,6 +45,11 @@
   .cipher-wheel{ width: 34px; height: 34px; flex-shrink:0; }
   .brand-name{ font-family: var(--mono-display); font-size: 20px; letter-spacing: 2px; font-weight:700; color: var(--ink); }
   .brand-name span{ color: var(--brass); }
+  .beta-badge{
+    font-family: var(--mono-ui); font-size: 9px; letter-spacing: 1.5px;
+    color: var(--brass); border: 1px solid var(--brass-dim); border-radius: 4px;
+    padding: 2px 6px; margin-left: 8px; vertical-align: middle; font-weight: 600;
+  }
   .brand-sub{ font-family: var(--mono-ui); font-size: 11px; letter-spacing: 1.5px; color: var(--ink-dim); margin: 4px 0 28px 46px; text-transform: uppercase; }
   .field{ margin-bottom: 18px; }
   .field label{ display:block; font-family: var(--mono-ui); font-size: 10.5px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 7px; }
@@ -79,7 +84,7 @@
   .chat-header{ height: 56px; flex-shrink:0; border-bottom: 1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding: 0 22px; }
   .chat-header-title{ font-family: var(--mono-ui); font-size: 12px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; }
   .chat-header-title b{ color: var(--brass); font-weight: 600; }
-  .header-actions{ display:flex; gap: 10px; }
+  .header-actions{ display:flex; gap: 10px; margin-right: 50px; }
   .icon-btn{ background: transparent; border: 1px solid var(--line); color: var(--ink-dim); font-family: var(--mono-ui); font-size: 10.5px; letter-spacing: 1px; padding: 6px 11px; border-radius: 5px; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
   .icon-btn:hover{ border-color: var(--ink-dim); color: var(--ink); }
   .messages{ flex:1; overflow-y:auto; padding: 26px 28px; display:flex; flex-direction:column; gap: 4px; }
@@ -98,6 +103,15 @@
   .composer{ border-top: 1px solid var(--line); padding: 16px 22px 20px; display:flex; gap: 10px; flex-shrink:0; }
   .composer input{ flex:1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 15px; color: var(--ink); font-family: var(--sans); font-size: 14px; outline:none; transition: border-color 0.15s ease; }
   .composer input:focus{ border-color: var(--brass-dim); }
+  .image-btn{
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+    width: 46px; flex-shrink:0; color: var(--ink-dim); cursor:pointer; font-size: 17px;
+    display:flex; align-items:center; justify-content:center;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .image-btn:hover{ border-color: var(--brass-dim); color: var(--ink); }
+  .msg-image{ max-width: 260px; max-height: 260px; border-radius: 8px; display:block; cursor: pointer; }
+  .msg-image-wrap{ margin-top: 4px; }
   .send-btn{ background: var(--brass); border:none; border-radius:8px; width: 46px; color: #1B1408; cursor:pointer; font-size: 16px; display:flex; align-items:center; justify-content:center; transition: background 0.15s ease, transform 0.1s ease; }
   .send-btn:hover{ background: #EEC050; }
   .send-btn:active{ transform: scale(0.95); }
@@ -130,7 +144,7 @@
           </g>
           <circle cx="20" cy="20" r="3" fill="#E3B23C"/>
         </svg>
-        <div class="brand-name">CIPHER<span>ROOM</span></div>
+        <div class="brand-name">CIPHER<span>ROOM</span><span class="beta-badge">BETA</span></div>
       </div>
       <div class="brand-sub">real-time · room-keyed · end-to-end</div>
 
@@ -161,7 +175,7 @@
           </g>
           <circle cx="20" cy="20" r="3" fill="#E3B23C"/>
         </svg>
-        <div class="brand-name">CIPHER<span>ROOM</span></div>
+        <div class="brand-name">CIPHER<span>ROOM</span><span class="beta-badge">BETA</span></div>
       </div>
 
       <div class="side-block">
@@ -183,7 +197,7 @@
       <div class="chat-header">
         <div class="chat-header-title">RUANG // <b id="header-roomcode">—</b></div>
         <div class="header-actions">
-          <button class="icon-btn" id="btn-clear">Bersihkan tampilan</button>
+          <button class="icon-btn" id="btn-clear">Bersihkan</button>
         </div>
       </div>
 
@@ -203,6 +217,8 @@
 
       <div class="lock-note">🔒 Dienkripsi AES-GCM di perangkatmu sebelum dikirim. Server hanya meneruskan ciphertext, tidak menyimpannya ke disk.</div>
       <div class="composer">
+        <input type="file" id="image-input" accept="image/*" class="hidden">
+        <button class="image-btn" id="btn-image" title="Kirim gambar" aria-label="Kirim gambar">🖼️</button>
         <input id="input-message" type="text" placeholder="Ketik pesan…" autocomplete="off">
         <button class="send-btn" id="btn-send">➤</button>
       </div>
@@ -309,8 +325,19 @@
     const timeSpan = document.createElement("span"); timeSpan.className = "time"; timeSpan.textContent = formatTime(msg.ts);
     meta.appendChild(nameSpan); meta.appendChild(timeSpan);
     const textDiv = document.createElement("div");
-    textDiv.className = "msg-text"; textDiv.textContent = msg.text;
-    bubble.appendChild(meta); bubble.appendChild(textDiv);
+    textDiv.className = "msg-text"; textDiv.textContent = msg.text || "";
+    bubble.appendChild(meta);
+    if(msg.text) bubble.appendChild(textDiv);
+    if(msg.image){
+      const imgWrap = document.createElement("div");
+      imgWrap.className = "msg-image-wrap";
+      const img = document.createElement("img");
+      img.className = "msg-image";
+      img.src = msg.image;
+      img.addEventListener("click", () => window.open(msg.image, "_blank"));
+      imgWrap.appendChild(img);
+      bubble.appendChild(imgWrap);
+    }
     wrap.appendChild(bubble);
     return wrap;
   }
@@ -417,6 +444,49 @@
     socket.emit("message", enc);
   }
 
+  function compressImage(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("read_failed"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("decode_failed"));
+        img.onload = () => {
+          const MAX_DIM = 1000;
+          let { width, height } = img;
+          if(width > MAX_DIM || height > MAX_DIM){
+            const scale = MAX_DIM / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.72));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function sendImage(file){
+    if(!file || !socket) return;
+    if(!file.type.startsWith("image/")){
+      alert("File yang dipilih bukan gambar.");
+      return;
+    }
+    try{
+      const dataUrl = await compressImage(file);
+      const payload = { user: username, image: dataUrl, ts: Date.now() };
+      const enc = await encryptPayload(payload);
+      socket.emit("message", enc);
+    }catch(e){
+      alert("Gagal memproses gambar. Coba gambar lain.");
+    }
+  }
+
   function leaveRoom(){
     if(socket){ socket.emit("leave"); socket.disconnect(); socket = null; }
     $("chat-screen").classList.add("hidden");
@@ -447,6 +517,12 @@
       sendMessage(input.value);
       input.value = "";
     }
+  });
+  $("btn-image").addEventListener("click", () => $("image-input").click());
+  $("image-input").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if(file) sendImage(file);
+    e.target.value = ""; // reset so picking the same file again still fires 'change'
   });
 })();
 </script>
