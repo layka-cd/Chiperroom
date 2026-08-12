@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3000;
 // ---------------------------------------------------------------------
 const rooms = new Map();
 
-const MAX_BUFFER_PER_ROOM = 200; // recent ciphertext messages kept for late joiners in this session
+const MAX_BUFFER_PER_ROOM = 50; // recent ciphertext messages kept for late joiners in this session
 const MAX_MEMBERS_PER_ROOM = 60;
 
 // Very small per-socket rate limiter to blunt spam/flooding.
