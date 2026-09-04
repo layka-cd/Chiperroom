@@ -133,7 +133,7 @@
     #chat-screen{ flex-direction: column; }
     .sidebar{
       width: 100%; flex-shrink: 0; flex-direction: row; align-items: center;
-      padding: 10px 14px; padding-top: max(10px, env(safe-area-inset-top));
+      padding: 10px 60px 10px 14px; padding-top: max(10px, env(safe-area-inset-top));
       border-right: none; border-bottom: 1px solid var(--line);
       gap: 10px;
     }
@@ -143,7 +143,7 @@
     .side-block:nth-child(2){ display: none; }
     .side-block:nth-child(3){ display: none !important; }
     .conn-note{ margin: 0 0 0 auto !important; white-space: nowrap; }
-    .leave-btn{ margin-top: 0; flex-shrink: 0; padding: 8px 12px; }
+    .leave-btn{ margin-top: 0; flex-shrink: 0; padding: 8px 12px; white-space: nowrap; }
     .messages{ padding: 18px; }
     .composer{ padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); }
     .lock-note{ padding: 0 14px 10px; }
