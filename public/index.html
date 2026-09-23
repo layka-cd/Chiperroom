@@ -69,15 +69,21 @@
   .credit-line{ text-align:center; margin-top:20px; font-family: var(--mono-ui); font-size:10px; letter-spacing:1.5px; color: var(--ink-dim); }
   .credit-line span{ color: var(--brass); }
   #chat-screen{ flex:1; display:flex; min-width:0; }
-  .sidebar{ width: 250px; flex-shrink:0; background: var(--panel); border-right: 1px solid var(--line); display:flex; flex-direction:column; padding: 20px 18px; }
-  .sidebar .brand{ margin-bottom: 24px; }
+  .sidebar{
+    width: clamp(208px, 20vw, 250px); flex-shrink:0; background: var(--panel); border-right: 1px solid var(--line);
+    display:flex; flex-direction:column; padding: 20px 18px; position: relative;
+    transition: width 0.25s ease, padding 0.25s ease, flex-direction 0s, background-color 0.25s ease, border-color 0.25s ease;
+  }
+  .sidebar .brand{ margin-bottom: 24px; transition: margin 0.25s ease; }
   .sidebar .brand-name{ font-size: 16px; }
   .cipher-wheel-small{ width: 24px; height:24px; }
-  .side-block{ margin-bottom: 22px; }
+  .info-toggle{ display:none; }
+  .side-info{ display:flex; flex-direction:column; gap: 22px; flex:1; min-height:0; }
+  .side-block{ margin-bottom: 0; }
   .side-label{ font-family: var(--mono-ui); font-size: 10px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 8px; }
   .room-code-display{ font-family: var(--mono-display); font-size: 21px; color: var(--brass); letter-spacing: 1px; word-break: break-all; }
   .status-line{ display:flex; align-items:center; gap: 7px; font-family: var(--mono-ui); font-size: 11.5px; color: var(--sage); margin-top: 6px; }
-  .dot{ width:7px; height:7px; border-radius:50%; background: var(--sage); box-shadow: 0 0 6px var(--sage); }
+  .dot{ width:7px; height:7px; border-radius:50%; background: var(--sage); box-shadow: 0 0 6px var(--sage); flex-shrink:0; }
   .member-list{ display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; }
   .member-row{ display:flex; align-items:center; gap:9px; font-family: var(--mono-ui); font-size: 12.5px; color: var(--ink); }
   .member-dot{ width:6px; height:6px; border-radius:50%; background: var(--sage); flex-shrink:0; }
@@ -126,27 +132,45 @@
   ::-webkit-scrollbar{ width: 8px; }
   ::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 4px; }
   ::-webkit-scrollbar-track{ background: transparent; }
-  @media (prefers-reduced-motion: reduce){ .cipher-wheel, .cipher-wheel-small, .wheel-mini { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce){
+    .cipher-wheel, .cipher-wheel-small, .wheel-mini { animation: none !important; }
+    .sidebar, .side-info, .info-toggle .chevron, .brand{ transition: none !important; }
+  }
   .cipher-wheel .rotor, .cipher-wheel-small .rotor, .wheel-mini .rotor{ animation: spin 12s linear infinite; transform-origin: 50% 50%; }
   @keyframes spin{ from{ transform: rotate(0deg);} to{ transform: rotate(360deg);} }
   @media (max-width: 720px){
     #chat-screen{ flex-direction: column; }
     .sidebar{
-      width: 100%; flex-shrink: 0; flex-direction: row; align-items: center;
+      width: 100%; flex-shrink: 0; flex-direction: row; align-items: center; flex-wrap: wrap;
       padding: 10px 60px 10px 14px; padding-top: max(10px, env(safe-area-inset-top));
       border-right: none; border-bottom: 1px solid var(--line);
       gap: 10px;
     }
     .sidebar .brand{ margin-bottom: 0; }
     .sidebar .brand-name{ font-size: 13px; }
-    .side-block{ margin-bottom: 0; }
-    .side-block:nth-child(2){ display: none; }
-    .side-block:nth-child(3){ display: none !important; }
+    .info-toggle{
+      display:flex; align-items:center; gap:6px; background: var(--panel-2); border: 1px solid var(--line);
+      color: var(--ink-dim); font-family: var(--mono-ui); font-size: 10.5px; letter-spacing: 1px;
+      padding: 6px 10px; border-radius: 6px; cursor:pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .info-toggle:hover{ border-color: var(--brass-dim); color: var(--ink); }
+    .info-toggle .chevron{ display:inline-block; transition: transform 0.2s ease; font-size: 9px; }
+    .info-toggle[aria-expanded="true"] .chevron{ transform: rotate(180deg); }
+    .side-info{
+      order: 5; flex-basis: 100%;
+      max-height: 0; opacity: 0; overflow: hidden; gap: 18px; padding: 0 2px;
+      transition: max-height 0.22s ease, opacity 0.18s ease, padding 0.22s ease;
+    }
+    .side-info.open{ max-height: 55vh; opacity: 1; overflow-y: auto; padding: 14px 2px 4px; }
     .conn-note{ margin: 0 0 0 auto !important; white-space: nowrap; }
     .leave-btn{ margin-top: 0; flex-shrink: 0; padding: 8px 12px; white-space: nowrap; }
     .messages{ padding: 18px; }
     .composer{ padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); }
     .lock-note{ padding: 0 14px 10px; }
+  }
+  @media (max-width: 380px){
+    .info-toggle span.info-label{ display:none; }
   }
 </style>
 </head>
@@ -200,15 +224,21 @@
         <div class="brand-name">CIPHER<span>ROOM</span><span class="beta-badge">BETA</span></div>
       </div>
 
-      <div class="side-block">
-        <div class="side-label">Ruang</div>
-        <div class="room-code-display" id="side-roomcode">—</div>
-        <div class="status-line"><div class="dot"></div><span id="side-online-count">1 online</span></div>
-      </div>
+      <button class="info-toggle" id="info-toggle" type="button" aria-expanded="false" aria-controls="side-info">
+        <div class="dot"></div><span class="info-label">Ruang &amp; Anggota</span><span class="chevron">▾</span>
+      </button>
 
-      <div class="side-block" style="flex:1; display:flex; flex-direction:column; min-height:0;">
-        <div class="side-label">Anggota</div>
-        <div class="member-list" id="member-list"></div>
+      <div class="side-info" id="side-info">
+        <div class="side-block">
+          <div class="side-label">Ruang</div>
+          <div class="room-code-display" id="side-roomcode">—</div>
+          <div class="status-line"><div class="dot"></div><span id="side-online-count">1 online</span></div>
+        </div>
+
+        <div class="side-block" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+          <div class="side-label">Anggota</div>
+          <div class="member-list" id="member-list"></div>
+        </div>
       </div>
 
       <div class="conn-note ok" id="conn-note" style="margin-bottom:10px;">● terhubung</div>
@@ -520,6 +550,37 @@
     $("input-roomcode").value = "";
     $("messages").innerHTML = '<div class="msg-empty"><svg class="wheel-mini" viewBox="0 0 40 40"><g class="rotor"><circle cx="20" cy="20" r="17" fill="none" stroke="#948AA0" stroke-width="1.4" stroke-dasharray="2 4"/><circle cx="20" cy="20" r="11" fill="none" stroke="#948AA0" stroke-width="1.2"/><line x1="20" y1="3" x2="20" y2="9" stroke="#948AA0" stroke-width="1.6"/></g><circle cx="20" cy="20" r="3" fill="#948AA0"/></svg>— Awal percakapan —</div>';
   }
+
+  // ---------------- Mobile info toggle (Ruang & Anggota dropdown) ----------------
+  (function(){
+    const toggleBtn = $("info-toggle");
+    const panel = $("side-info");
+    if(!toggleBtn || !panel) return;
+
+    function closePanel(){
+      panel.classList.remove("open");
+      toggleBtn.setAttribute("aria-expanded", "false");
+    }
+    function openPanel(){
+      panel.classList.add("open");
+      toggleBtn.setAttribute("aria-expanded", "true");
+    }
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if(panel.classList.contains("open")) closePanel(); else openPanel();
+    });
+    document.addEventListener("click", (e) => {
+      if(!panel.classList.contains("open")) return;
+      if(panel.contains(e.target) || toggleBtn.contains(e.target)) return;
+      closePanel();
+    });
+    // Above the mobile breakpoint the panel is always visible inline; drop any leftover state.
+    let wasMobile = window.innerWidth <= 720;
+    window.addEventListener("resize", () => {
+      const isMobile = window.innerWidth <= 720;
+      if(isMobile !== wasMobile){ closePanel(); wasMobile = isMobile; }
+    });
+  })();
 
   // ---------------- Wire up ----------------
   $("btn-join").addEventListener("click", joinRoom);
