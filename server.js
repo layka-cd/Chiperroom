@@ -7,12 +7,12 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-// Frontend dilayani dari server yang sama, jadi CORS tidak perlu dibuka.
-// Kalau frontend ada di domain lain, set ALLOWED_ORIGIN (pisahkan dengan koma).
-const allowedOrigins = (process.env.ALLOWED_ORIGIN || "").split(",").map((o) => o.trim()).filter(Boolean);
 const io = new Server(server, {
-  ...(allowedOrigins.length ? { cors: { origin: allowedOrigins } } : {}),
-  maxHttpBufferSize: 512 * 1024 // 512KB per event: muat gambar terkompresi (~170KB) setelah dienkripsi
+  // Halaman disajikan oleh server ini sendiri (same-origin), jadi CORS tidak diperlukan.
+  // Kalau front-end kamu dihosting di domain lain, set env ALLOWED_ORIGIN, mis.
+  // ALLOWED_ORIGIN=https://chiperroom.onrender.com
+  cors: process.env.ALLOWED_ORIGIN ? { origin: process.env.ALLOWED_ORIGIN } : undefined,
+  maxHttpBufferSize: 512 * 1024 // 512KB per event: cukup untuk pesan teks dan gambar terkompres
 });
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3000;
 
 // ---------------------------------------------------------------------
 // In-memory only. Nothing here ever touches disk or a database.
-// roomId -> { members: Map<socket.id, username>, buffer: Array<msg> }
+// roomId -> { members: Map<socket.id, username>, buffer: Array<msg>, bufferBytes: number }
 // roomId is a SHA-256 hash the CLIENT computes from the room code — the
 // server never learns the actual room code, and the hash alone cannot be
 // reversed into the encryption key (different derivation context/salt).
@@ -29,9 +29,10 @@ const PORT = process.env.PORT || 3000;
 const rooms = new Map();
 
 const MAX_BUFFER_PER_ROOM = 50; // recent ciphertext messages kept for late joiners in this session
-const MAX_BUFFER_BYTES = 4 * 1024 * 1024; // batas memori per ruang (gambar bisa besar)
-const MAX_CT_LENGTH = 300000; // panjang ciphertext base64 per pesan
-const MAX_MEMBERS_PER_ROOM = 50;
+const MAX_BUFFER_BYTES = 4 * 1024 * 1024; // total ciphertext per room (gambar bisa besar, jadi dibatasi per byte juga)
+const MAX_MEMBERS_PER_ROOM = 60;
+const MAX_IV_CHARS = 64;
+const MAX_CT_CHARS = 400000; // ~300KB data asli; klien membaca batas ini dari ack "join"
 
 // Very small per-socket rate limiter to blunt spam/flooding.
 const RATE_LIMIT_WINDOW_MS = 10000;
@@ -39,7 +40,7 @@ const RATE_LIMIT_MAX_EVENTS = 40;
 
 function getRoom(roomId) {
   if (!rooms.has(roomId)) {
-    rooms.set(roomId, { members: new Map(), buffer: [], bytes: 0 });
+    rooms.set(roomId, { members: new Map(), buffer: [], bufferBytes: 0 });
   }
   return rooms.get(roomId);
 }
@@ -79,6 +80,8 @@ io.on("connection", (socket) => {
       return ack && ack({ ok: false, error: "invalid_payload" });
     }
 
+    if (socket.data.roomId) handleLeave(); // socket yang sama join ulang: keluar dari ruang lama dulu
+
     const room = getRoom(cleanRoomId);
     if (room.members.size >= MAX_MEMBERS_PER_ROOM) {
       return ack && ack({ ok: false, error: "room_full" });
@@ -95,18 +98,19 @@ io.on("connection", (socket) => {
       ack({
         ok: true,
         members: presenceList(room),
-        recent: room.buffer.map(({ id, iv, ct }) => ({ id, iv, ct })) // ciphertext only
+        recent: room.buffer, // ciphertext only: [{id, iv, ct}]
+        limits: { maxCt: MAX_CT_CHARS }
       });
   });
 
   socket.on("message", (payload, ack) => {
-    const reply = (res) => typeof ack === "function" && ack(res);
+    const reply = (r) => typeof ack === "function" && ack(r);
     if (!withinRateLimit()) return reply({ ok: false, error: "rate_limited" });
     const roomId = socket.data.roomId;
     if (!roomId) return reply({ ok: false, error: "not_in_room" });
     const { iv, ct } = payload || {};
     if (typeof iv !== "string" || typeof ct !== "string") return reply({ ok: false, error: "invalid_payload" });
-    if (iv.length > 64 || ct.length > MAX_CT_LENGTH) return reply({ ok: false, error: "too_large" }); // sanity caps
+    if (iv.length > MAX_IV_CHARS || ct.length > MAX_CT_CHARS) return reply({ ok: false, error: "too_large" }); // sanity caps
 
     const room = getRoom(roomId);
     const entry = {
@@ -114,14 +118,17 @@ io.on("connection", (socket) => {
       iv,
       ct
     };
-    entry.size = iv.length + ct.length;
     room.buffer.push(entry);
-    room.bytes += entry.size;
-    while (room.buffer.length > MAX_BUFFER_PER_ROOM || (room.bytes > MAX_BUFFER_BYTES && room.buffer.length > 1)) {
-      room.bytes -= room.buffer.shift().size;
+    room.bufferBytes += iv.length + ct.length;
+    while (
+      room.buffer.length > 1 &&
+      (room.buffer.length > MAX_BUFFER_PER_ROOM || room.bufferBytes > MAX_BUFFER_BYTES)
+    ) {
+      const old = room.buffer.shift();
+      room.bufferBytes -= old.iv.length + old.ct.length;
     }
 
-    io.to(roomId).emit("message", { id: entry.id, iv: entry.iv, ct: entry.ct });
+    io.to(roomId).emit("message", entry);
     reply({ ok: true });
   });
 
