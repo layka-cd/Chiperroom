@@ -1,588 +1,606 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="google-adsense-account" content="ca-pub-2764630275145768">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#16121B" id="theme-color-meta">
+<meta name="theme-color" content="#12111A" id="theme-color-meta">
 <meta name="color-scheme" content="dark light">
-<title>ChiperRoom</title>
+<title>CipherRoom</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%2316121B'/%3E%3Ccircle cx='20' cy='20' r='15' fill='none' stroke='%23E3B23C' stroke-width='2' stroke-dasharray='2 4'/%3E%3Ccircle cx='20' cy='20' r='9' fill='none' stroke='%237FA893' stroke-width='1.6'/%3E%3Cline x1='20' y1='4' x2='20' y2='11' stroke='%23E3B23C' stroke-width='2.2'/%3E%3Ccircle cx='20' cy='20' r='3.5' fill='%23E3B23C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <script src="/socket.io/socket.io.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+:root{
+  --font:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --bg:#12111A; --solid:#1D192A; --glass:rgba(34,29,48,.55); --glass-2:rgba(255,255,255,.055);
+  --edge:rgba(255,255,255,.11); --line:rgba(255,255,255,.08);
+  --ink:#EFEAF4; --dim:#9D96AB; --acc:#E3B23C; --acc-hi:#F0C55A; --acc-text:#E3B23C; --on-acc:#1B1408;
+  --sage:#7FCBA6; --rust:#EE8272;
+  --mine:rgba(227,178,60,.15); --mine-edge:rgba(227,178,60,.36);
+  --shadow:0 24px 60px -24px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.06);
+  --b1:rgba(227,178,60,.17); --b2:rgba(127,203,166,.13); --b3:rgba(124,92,214,.2);
 
-  :root{
-    --bg: #16121B; --panel: #1E1826; --panel-2: #241D2E; --line: #34293F;
-    --brass: #E3B23C; --brass-dim: #9C7C2E; --sage: #7FA893; --rust: #C15C4A;
-    --ink: #EDE6DA; --ink-dim: #948AA0;
-    --mono-ui: 'JetBrains Mono', monospace; --mono-display: 'Space Mono', monospace; --sans: 'Inter', sans-serif;
-  }
-  html[data-theme="light"]{
-    --bg: #F3EEE3; --panel: #FFFFFF; --panel-2: #F1EBDC; --line: #DED2B8;
-    --brass: #B8842A; --brass-dim: #8C6620; --sage: #4F7C67; --rust: #A8453A;
-    --ink: #2A2430; --ink-dim: #75697F;
-  }
-  html, body, #app, .join-card, .sidebar, .chat-main, .msg-bubble, .field input, .composer input{
-    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
-  }
-  .theme-toggle{
-    position: fixed; top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); z-index: 50;
-    width: 38px; height: 38px; border-radius: 8px;
-    background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
-    font-size: 16px; cursor: pointer; display:flex; align-items:center; justify-content:center;
-    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
-  }
-  .theme-toggle:hover{ border-color: var(--brass-dim); }
-  .theme-toggle:active{ transform: scale(0.93); }
-  *{ box-sizing: border-box; }
-  html{ background: var(--bg); }
-  html, body{ margin:0; padding:0; height:100%; background: var(--bg); color: var(--ink); font-family: var(--sans); overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
-  body{ background-image: radial-gradient(circle at 15% 10%, rgba(227,178,60,0.05), transparent 40%), radial-gradient(circle at 90% 80%, rgba(127,168,147,0.04), transparent 45%); }
-  ::selection{ background: var(--brass); color: #16121B; }
-  #app{ height: 100vh; height: 100dvh; width: 100%; display:flex; }
-  .hidden{ display:none !important; }
-  #join-screen{ flex: 1; display:flex; align-items:center; justify-content:center; padding: 24px; padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
-  .join-card{ width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 36px 32px 30px; position: relative; overflow: hidden; }
-  .join-card::before{ content:""; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, transparent, var(--brass), transparent); }
-  .brand{ display:flex; align-items:center; gap:12px; margin-bottom: 6px; }
-  .cipher-wheel{ width: 34px; height: 34px; flex-shrink:0; }
-  .brand-name{ font-family: var(--mono-display); font-size: 20px; letter-spacing: 2px; font-weight:700; color: var(--ink); }
-  .brand-name span{ color: var(--brass); }
-  .beta-badge{
-    font-family: var(--mono-ui); font-size: 9px; letter-spacing: 1.5px;
-    color: var(--brass); border: 1px solid var(--brass-dim); border-radius: 4px;
-    padding: 2px 6px; margin-left: 8px; vertical-align: middle; font-weight: 600;
-  }
-  .brand-sub{ font-family: var(--mono-ui); font-size: 11px; letter-spacing: 1.5px; color: var(--ink-dim); margin: 4px 0 28px 46px; text-transform: uppercase; }
-  .field{ margin-bottom: 18px; }
-  .field label{ display:block; font-family: var(--mono-ui); font-size: 10.5px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 7px; }
-  .field input{ width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; color: var(--ink); font-family: var(--mono-ui); font-size: 14.5px; letter-spacing: 0.5px; outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
-  .field input::placeholder{ color: #524A5E; }
-  .field input:focus{ border-color: var(--brass-dim); box-shadow: 0 0 0 3px rgba(227,178,60,0.08); }
-  .field-hint{ font-family: var(--mono-ui); font-size: 10.5px; color: var(--ink-dim); margin-top: 7px; line-height: 1.5; }
-  .join-btn{ width:100%; margin-top: 8px; background: var(--brass); color: #1B1408; border: none; border-radius: 6px; padding: 13px; font-family: var(--mono-ui); font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: transform 0.1s ease, background 0.15s ease; }
-  .join-btn:hover{ background: #EEC050; }
-  .join-btn:active{ transform: scale(0.98); }
-  .join-btn:disabled{ opacity: 0.5; cursor: not-allowed; }
-  .join-error{ font-family: var(--mono-ui); font-size: 11.5px; color: var(--rust); margin-top: 14px; min-height: 14px; }
-  .credit-line{ text-align:center; margin-top:20px; font-family: var(--mono-ui); font-size:10px; letter-spacing:1.5px; color: var(--ink-dim); }
-  .credit-line span{ color: var(--brass); }
-  #chat-screen{ flex:1; display:flex; min-width:0; }
-  .sidebar{ width: 250px; flex-shrink:0; background: var(--panel); border-right: 1px solid var(--line); display:flex; flex-direction:column; padding: 20px 18px; }
-  .sidebar .brand{ margin-bottom: 24px; }
-  .sidebar .brand-name{ font-size: 16px; }
-  .cipher-wheel-small{ width: 24px; height:24px; }
-  .side-block{ margin-bottom: 22px; }
-  .side-label{ font-family: var(--mono-ui); font-size: 10px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 8px; }
-  .room-code-display{ font-family: var(--mono-display); font-size: 21px; color: var(--brass); letter-spacing: 1px; word-break: break-all; }
-  .status-line{ display:flex; align-items:center; gap: 7px; font-family: var(--mono-ui); font-size: 11.5px; color: var(--sage); margin-top: 6px; }
-  .dot{ width:7px; height:7px; border-radius:50%; background: var(--sage); box-shadow: 0 0 6px var(--sage); }
-  .member-list{ display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; }
-  .member-row{ display:flex; align-items:center; gap:9px; font-family: var(--mono-ui); font-size: 12.5px; color: var(--ink); }
-  .member-dot{ width:6px; height:6px; border-radius:50%; background: var(--sage); flex-shrink:0; }
-  .member-you{ font-size: 9.5px; color: var(--brass); border: 1px solid var(--brass-dim); padding: 1px 6px; border-radius: 3px; letter-spacing: 1px; margin-left: auto; }
-  .leave-btn{ background: transparent; border: 1px solid var(--line); color: var(--ink-dim); font-family: var(--mono-ui); font-size: 11px; letter-spacing: 1px; padding: 10px; border-radius: 6px; cursor: pointer; margin-top: auto; transition: border-color 0.15s ease, color 0.15s ease; }
-  .leave-btn:hover{ border-color: var(--rust); color: var(--rust); }
-  .chat-main{ flex:1; display:flex; flex-direction:column; min-width:0; min-height:0; }
-  .chat-header{ height: 56px; flex-shrink:0; border-bottom: 1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding: 0 22px; }
-  .chat-header-title{ font-family: var(--mono-ui); font-size: 12px; letter-spacing: 1.5px; color: var(--ink-dim); text-transform: uppercase; }
-  .chat-header-title b{ color: var(--brass); font-weight: 600; }
-  .header-actions{ display:flex; align-items:center; gap: 10px; margin-right: 50px; }
-  .hamburger-btn{
-    display:none; background: transparent; border: 1px solid var(--line); color: var(--ink);
-    width: 34px; height: 34px; border-radius: 6px; font-size: 16px; cursor:pointer;
-    align-items:center; justify-content:center; flex-shrink:0; margin-right: 6px;
-    transition: border-color 0.15s ease, color 0.15s ease;
-  }
-  .hamburger-btn:hover{ border-color: var(--brass-dim); }
-  .user-badge{
-    width: 26px; height: 26px; border-radius: 50%; background: var(--brass); color:#1B1408;
-    font-family: var(--mono-ui); font-weight:700; font-size: 12px; letter-spacing:0;
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
-  }
-  .sidebar-overlay{ display:none; }
-  .icon-btn{ background: transparent; border: 1px solid var(--line); color: var(--ink-dim); font-family: var(--mono-ui); font-size: 10.5px; letter-spacing: 1px; padding: 6px 11px; border-radius: 5px; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
-  .icon-btn:hover{ border-color: var(--ink-dim); color: var(--ink); }
-  .messages{ flex:1; overflow-y:auto; padding: 26px 28px; display:flex; flex-direction:column; gap: 4px; }
-  .msg-empty{ margin: auto; text-align:center; font-family: var(--mono-ui); font-size: 12px; color: var(--ink-dim); letter-spacing: 1px; }
-  .msg-empty .wheel-mini{ width: 40px; height:40px; margin: 0 auto 14px; opacity: 0.6; }
-  .msg-row{ display:flex; margin: 7px 0; max-width: 72%; }
-  .msg-row.mine{ align-self: flex-end; flex-direction: row-reverse; }
-  .msg-row.system{ align-self:center; max-width: 90%; }
-  .msg-bubble{ background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 13px; }
-  .msg-row.mine .msg-bubble{ background: rgba(227,178,60,0.1); border-color: rgba(227,178,60,0.35); }
-  .msg-row.system .msg-bubble{ background: transparent; border: 1px dashed var(--line); font-family: var(--mono-ui); font-size: 11px; color: var(--ink-dim); letter-spacing: 0.5px; padding: 5px 12px; }
-  .msg-meta{ font-family: var(--mono-ui); font-size: 10.5px; color: var(--brass); letter-spacing: 0.5px; margin-bottom: 3px; display:flex; gap:8px; }
-  .msg-row.mine .msg-meta{ color: var(--sage); flex-direction: row-reverse; }
-  .msg-meta .time{ color: var(--ink-dim); }
-  .msg-text{ font-size: 14px; line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
-  .composer{ border-top: 1px solid var(--line); padding: 16px 22px calc(20px + env(safe-area-inset-bottom)); display:flex; gap: 10px; flex-shrink:0; }
-  .composer input{ flex:1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 15px; color: var(--ink); font-family: var(--sans); font-size: 14px; outline:none; transition: border-color 0.15s ease; }
-  .composer input:focus{ border-color: var(--brass-dim); }
-  .image-btn{
-    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
-    width: 46px; flex-shrink:0; color: var(--ink-dim); cursor:pointer; font-size: 17px;
-    display:flex; align-items:center; justify-content:center;
-    transition: border-color 0.15s ease, color 0.15s ease;
-  }
-  .image-btn:hover{ border-color: var(--brass-dim); color: var(--ink); }
-  .msg-image{ max-width: 260px; max-height: 260px; border-radius: 8px; display:block; cursor: pointer; }
-  .msg-image-wrap{ margin-top: 4px; }
-  .send-btn{ background: var(--brass); border:none; border-radius:8px; width: 46px; color: #1B1408; cursor:pointer; font-size: 16px; display:flex; align-items:center; justify-content:center; transition: background 0.15s ease, transform 0.1s ease; }
-  .send-btn:hover{ background: #EEC050; }
-  .send-btn:active{ transform: scale(0.95); }
-  .lock-note{ font-family: var(--mono-ui); font-size: 9.5px; color: var(--ink-dim); letter-spacing: 0.5px; padding: 0 22px 12px; margin-top: -8px; display:flex; align-items:center; gap:6px; }
-  .conn-note{ font-family: var(--mono-ui); font-size: 9.5px; letter-spacing: 0.5px; }
-  .conn-note.ok{ color: var(--sage); }
-  .conn-note.bad{ color: var(--rust); }
-  ::-webkit-scrollbar{ width: 8px; }
-  ::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 4px; }
-  ::-webkit-scrollbar-track{ background: transparent; }
-  @media (prefers-reduced-motion: reduce){ .cipher-wheel, .cipher-wheel-small, .wheel-mini { animation: none !important; } }
-  .cipher-wheel .rotor, .cipher-wheel-small .rotor, .wheel-mini .rotor{ animation: spin 12s linear infinite; transform-origin: 50% 50%; }
-  @keyframes spin{ from{ transform: rotate(0deg);} to{ transform: rotate(360deg);} }
-  @media (max-width: 720px){
-    #chat-screen{ flex-direction: column; position: relative; }
-    .hamburger-btn{ display:flex; }
-    .sidebar{
-      position: fixed; top:0; left:0; bottom:0; z-index: 70;
-      width: 82%; max-width: 300px; flex-shrink: 0; flex-direction: column; align-items: stretch;
-      padding: 20px 18px; padding-top: max(20px, env(safe-area-inset-top));
-      padding-bottom: max(20px, env(safe-area-inset-bottom));
-      border-right: 1px solid var(--line); border-bottom: none;
-      transform: translateX(-105%);
-      transition: transform 0.25s ease;
-      box-shadow: 10px 0 30px rgba(0,0,0,0.45);
-      gap: 0;
-    }
-    .sidebar.open{ transform: translateX(0); }
-    .sidebar-overlay{
-      display:none; position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 65;
-    }
-    .sidebar-overlay.show{ display:block; }
-    .sidebar .brand{ margin-bottom: 24px; }
-    .sidebar .brand-name{ font-size: 16px; }
-    .side-block{ margin-bottom: 22px; }
-    .side-block:nth-child(2){ display: block; }
-    .side-block:nth-child(3){ display: flex !important; }
-    .leave-btn{ margin-top: auto; flex-shrink: 0; padding: 10px; white-space: nowrap; }
-    .chat-header{ padding: 0 14px; }
-    .messages{ padding: 18px; }
-    .composer{ padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); }
-    .lock-note{ padding: 0 14px 10px; }
-  }
+  /* transitions.dev motion tokens */
+  --ease:cubic-bezier(.22,1,.36,1);
+  --page-slide-dur:250ms; --page-fade-dur:250ms; --page-slide-distance:8px; --page-blur:3px; --page-stagger:0ms; --page-exit-enabled:1;
+  --page-slide-ease:var(--ease); --page-fade-ease:var(--ease);
+  --modal-open-dur:250ms; --modal-close-dur:150ms; --modal-scale:.96; --modal-scale-close:.96; --modal-ease:var(--ease);
+  --toast-open:350ms; --toast-close:250ms; --toast-distance:16px; --toast-blur:2px; --toast-scale:.97; --toast-ease:var(--ease);
+  --icon-swap-dur:250ms; --icon-swap-blur:2px; --icon-swap-start-scale:.25; --icon-swap-ease:ease-in-out;
+  --text-swap-dur:150ms; --text-swap-translate-y:4px; --text-swap-blur:2px; --text-swap-ease:ease-in-out;
+  --shake-distance:6px; --shake-overshoot:4px; --shake-dur-a:80ms; --shake-dur-b:60ms; --shake-ease:var(--ease); --revert-dur:280ms;
+}
+html[data-theme="light"]{
+  --bg:#E8E6F0; --solid:#F6F5FA; --glass:rgba(255,255,255,.62); --glass-2:rgba(255,255,255,.55);
+  --edge:rgba(255,255,255,.9); --line:rgba(40,30,70,.1);
+  --ink:#231F2D; --dim:#665F74; --acc-text:#8A5F08; --sage:#2B8460; --rust:#C13F33;
+  --mine:rgba(227,178,60,.2); --mine-edge:rgba(176,124,16,.4);
+  --shadow:0 24px 60px -28px rgba(60,40,110,.4), inset 0 1px 0 rgba(255,255,255,.8);
+  --b1:rgba(227,178,60,.32); --b2:rgba(127,203,166,.3); --b3:rgba(124,92,214,.2);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+::selection{background:var(--acc);color:var(--on-acc)}
+.hidden{display:none!important}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* Glass */
+.glass{background:var(--glass);border:1px solid var(--edge);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:var(--solid)}}
+
+/* Page transition: Page side-by-side (transitions.dev) */
+.t-page-slide{position:fixed;inset:0}
+.t-page-slide .t-page[data-page-id="1"]{--t-page-from-x:calc(var(--page-slide-distance) * -1)}
+.t-page-slide .t-page[data-page-id="2"]{--t-page-from-x:var(--page-slide-distance)}
+.t-page-slide .t-page{
+  position:absolute;inset:0;opacity:0;pointer-events:none;overflow:hidden;
+  transform:translateX(calc(var(--t-page-from-x,0px) * var(--page-exit-enabled)));
+  filter:blur(calc(var(--page-blur) * var(--page-exit-enabled)));
+  transition:opacity var(--page-fade-dur) var(--page-fade-ease),transform var(--page-slide-dur) var(--page-slide-ease),filter var(--page-slide-dur) var(--page-slide-ease);
+  will-change:opacity,transform,filter;
+  /* mesh lives on each page so the glass always has something to blur */
+  background:radial-gradient(60% 55% at 12% 8%,var(--b1),transparent 70%),radial-gradient(55% 50% at 92% 90%,var(--b2),transparent 70%),radial-gradient(50% 45% at 78% 18%,var(--b3),transparent 72%),var(--bg);
+}
+.t-page-slide[data-page="1"] .t-page[data-page-id="1"],
+.t-page-slide[data-page="2"] .t-page[data-page-id="2"]{opacity:1;pointer-events:auto;transform:translateX(0);filter:blur(0);transition-delay:var(--page-stagger)}
+
+/* Join */
+.join{height:100%;overflow:auto;display:grid;place-items:center;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))}
+.card{width:100%;max-width:410px;border-radius:24px;padding:34px 30px 26px}
+.brand{display:flex;align-items:center;gap:12px}
+.wheel{width:46px;height:46px;flex-shrink:0}
+.wheel-s{width:30px;height:30px}
+.wheel svg{width:100%;height:100%;display:block}
+.wa{stroke:var(--acc)} .ws{stroke:var(--sage)} .wf{fill:var(--acc)}
+.rotor{transform-origin:50% 50%;animation:spin 14s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brand-name{font-weight:700;font-size:21px;letter-spacing:-.3px}
+.brand-name em{font-style:normal;color:var(--acc-text)}
+.beta{font-size:11px;font-weight:600;color:var(--acc-text);border:1px solid var(--mine-edge);border-radius:99px;padding:2px 8px;margin-left:8px;vertical-align:3px;letter-spacing:0}
+.lead{margin:14px 0 26px;font:400 11.5px var(--mono);letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.field{margin-bottom:6px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}
+.box{display:flex;align-items:center;background:var(--glass-2);border:1px solid var(--line);border-radius:12px;transition:border-color 150ms ease-out,box-shadow 150ms ease-out}
+.box:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 18%,transparent)}
+.box.is-error{border-color:var(--rust)}
+.box input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:500 15px var(--font);padding:13px 14px}
+.box input::placeholder{color:var(--dim);opacity:.7}
+#input-roomcode{font-family:var(--mono);font-size:14px;letter-spacing:.3px}
+.t-error-msg{margin:6px 2px 0;min-height:18px;font-size:12.5px;color:var(--rust)}
+.hint{display:flex;align-items:center;gap:8px;min-height:18px;margin:2px 2px 16px;font-size:12.5px;color:var(--dim)}
+.hint i{width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background-color 250ms}
+.hint[data-l="weak"] i{background:var(--rust)} .hint[data-l="mid"] i{background:var(--acc)} .hint[data-l="good"] i{background:var(--sage)}
+.btn{width:100%;border:0;border-radius:12px;padding:14px;background:var(--acc);color:var(--on-acc);font-weight:700;font-size:15px;cursor:pointer;transition:background-color 150ms,transform 100ms,box-shadow 200ms;box-shadow:0 10px 24px -12px color-mix(in srgb,var(--acc) 80%,transparent)}
+.btn:hover{background:var(--acc-hi)} .btn:active{transform:scale(.985)} .btn:disabled{opacity:.6;cursor:wait}
+.acc{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+.acc-btn{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:4px 0;color:var(--ink);font:500 14px var(--font);text-align:left;cursor:pointer}
+.chev{width:16px;height:16px;color:var(--dim);transition:transform 250ms ease-in-out}
+.acc-btn[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.acc-body{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows 300ms ease-in-out,opacity 300ms ease-in-out}
+.acc-body.open{grid-template-rows:1fr;opacity:1}
+.acc-inner{overflow:hidden;min-height:0}
+.acc-inner p{margin:10px 0 2px;font-size:13.5px;line-height:1.7;color:var(--dim)}
+.credit{text-align:center;margin-top:18px;font-size:12px;color:var(--dim)}
+.credit b{color:var(--acc-text);font-weight:600}
+
+/* Chat */
+.chat{height:100%;display:flex;gap:12px;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}
+.side{width:248px;flex-shrink:0;border-radius:22px;padding:20px 16px;display:flex;flex-direction:column;min-height:0}
+.side .brand-name{font-size:17px}
+.status{display:flex;align-items:center;gap:8px;margin:22px 0 4px;font-size:13px;font-weight:500}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 3px color-mix(in srgb,var(--sage) 25%,transparent)}
+.conn.bad .dot{background:var(--rust);box-shadow:0 0 0 3px color-mix(in srgb,var(--rust) 25%,transparent)}
+.conn.bad{color:var(--rust)}
+.side-label{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--dim);margin:20px 4px 10px}
+.count{font:500 12px var(--mono);background:var(--glass-2);border:1px solid var(--line);border-radius:99px;padding:1px 8px;color:var(--ink)}
+.members{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;min-height:0}
+.member{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;font-size:14px}
+.avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--acc) 22%,transparent);color:var(--acc-text);font-weight:700;font-size:12px;flex-shrink:0}
+.member span.n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.you{margin-left:auto;font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:99px;padding:1px 8px}
+.ghost{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--glass-2);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;transition:border-color 150ms,color 150ms,background-color 150ms}
+.ghost:hover{border-color:var(--rust);color:var(--rust)}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;border-radius:22px;overflow:hidden}
+.head{height:64px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 74px 0 20px;border-bottom:1px solid var(--line)}
+.head-t{display:flex;flex-direction:column;min-width:0}
+.head-t small{font-size:12px;color:var(--dim)}
+.code{display:flex;align-items:center;gap:6px;font:500 15px var(--mono);color:var(--acc-text);min-width:0}
+.code #header-roomcode{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool{display:grid;place-items:center;width:34px;height:34px;flex-shrink:0;background:var(--glass-2);border:1px solid var(--line);border-radius:10px;color:var(--dim);cursor:pointer;transition:color 150ms,border-color 150ms}
+.tool:hover{color:var(--ink);border-color:var(--dim)}
+.sp{flex:1}
+.link{background:none;border:0;color:var(--dim);font-size:13px;font-weight:500;cursor:pointer;padding:6px 8px;border-radius:8px}
+.link:hover{color:var(--ink);background:var(--glass-2)}
+.burger{display:none}
+.messages{flex:1;overflow-y:auto;padding:22px 24px;display:flex;flex-direction:column;gap:6px}
+.empty{margin:auto;text-align:center;color:var(--dim);font-size:13.5px;line-height:1.6;max-width:260px}
+.empty .wheel{opacity:.55;margin:0 auto 12px;width:44px;height:44px}
+.row{display:flex;max-width:min(74%,580px)}
+.row.mine{align-self:flex-end}
+.bubble{background:var(--glass-2);border:1px solid var(--line);border-radius:16px 16px 16px 6px;padding:9px 14px}
+.mine .bubble{background:var(--mine);border-color:var(--mine-edge);border-radius:16px 16px 6px 16px}
+.meta{display:flex;gap:8px;align-items:baseline;margin-bottom:2px;font-size:12.5px;font-weight:600;color:var(--acc-text)}
+.mine .meta{color:var(--sage)}
+.meta .time{font-weight:400;font-size:11.5px;color:var(--dim)}
+.text{font-size:14.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.pic{display:block;max-width:min(280px,100%);max-height:280px;border-radius:12px;margin-top:6px;cursor:zoom-in}
+.lock{display:flex;align-items:center;gap:7px;padding:0 24px 10px;font-size:12px;color:var(--dim)}
+.lock .ico{width:14px;height:14px;color:var(--sage)}
+.composer{display:flex;align-items:center;gap:8px;margin:0 14px calc(14px + env(safe-area-inset-bottom));padding:7px;border-radius:18px;background:var(--glass-2);border:1px solid var(--line)}
+.composer input[type=text]{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:400 15px var(--font);padding:10px 6px}
+.composer input::placeholder{color:var(--dim)}
+.composer:focus-within{border-color:var(--acc)}
+.send{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:12px;background:var(--acc);color:var(--on-acc);cursor:pointer;transition:opacity 150ms,transform 100ms}
+.send:active{transform:scale(.94)} .send:disabled{opacity:.35;cursor:default}
+.theme{position:fixed;z-index:60;top:max(18px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right));width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ink);cursor:pointer;transition:transform 100ms}
+.theme:active{transform:scale(.94)}
+.scrim{display:none}
+::-webkit-scrollbar{width:8px} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px} ::-webkit-scrollbar-track{background:transparent}
+
+/* Icon swap (transitions.dev) */
+.t-icon-swap{position:relative;display:inline-grid}
+.t-icon-swap .t-icon{grid-area:1/1;transition:opacity var(--icon-swap-dur) var(--icon-swap-ease),filter var(--icon-swap-dur) var(--icon-swap-ease),transform var(--icon-swap-dur) var(--icon-swap-ease);will-change:opacity,filter,transform}
+.t-icon-swap[data-state="a"] .t-icon[data-icon="a"],.t-icon-swap[data-state="b"] .t-icon[data-icon="b"]{opacity:1;filter:blur(0);transform:scale(1)}
+.t-icon-swap[data-state="a"] .t-icon[data-icon="b"],.t-icon-swap[data-state="b"] .t-icon[data-icon="a"]{opacity:0;filter:blur(var(--icon-swap-blur));transform:scale(var(--icon-swap-start-scale))}
+
+/* Text states swap (transitions.dev) */
+.t-text-swap{display:inline-block;transform:translateY(0);filter:blur(0);opacity:1;transition:transform var(--text-swap-dur) var(--text-swap-ease),filter var(--text-swap-dur) var(--text-swap-ease),opacity var(--text-swap-dur) var(--text-swap-ease);will-change:transform,filter,opacity}
+.t-text-swap.is-exit{transform:translateY(calc(var(--text-swap-translate-y) * -1));filter:blur(var(--text-swap-blur));opacity:0}
+.t-text-swap.is-enter-start{transform:translateY(var(--text-swap-translate-y));filter:blur(var(--text-swap-blur));opacity:0;transition:none}
+
+/* Error state shake (transitions.dev) */
+.t-input.is-error{transition:border-color var(--revert-dur) ease-out}
+.t-error-msg{opacity:0;visibility:hidden;transition:opacity var(--revert-dur) ease-out,visibility 0s linear var(--revert-dur)}
+.t-input-wrap.is-error .t-error-msg{opacity:1;visibility:visible;transition:opacity var(--revert-dur) ease-out,visibility 0s linear 0s}
+.t-input.is-shaking{animation:t-input-shake calc(var(--shake-dur-a) * 2 + var(--shake-dur-b) * 2) linear}
+@keyframes t-input-shake{
+  0%{transform:translateX(0);animation-timing-function:var(--shake-ease)}
+  28.57%{transform:translateX(var(--shake-distance));animation-timing-function:var(--shake-ease)}
+  57.14%{transform:translateX(calc(var(--shake-distance) * -1));animation-timing-function:var(--shake-ease)}
+  78.57%{transform:translateX(var(--shake-overshoot));animation-timing-function:var(--shake-ease)}
+  100%{transform:translateX(0)}
+}
+
+/* Toast open/close (transitions.dev) */
+.t-toast{opacity:0;transform:translateY(var(--toast-distance)) scale(var(--toast-scale));filter:blur(var(--toast-blur));will-change:transform,opacity,filter;transition:opacity var(--toast-close) var(--toast-ease),transform var(--toast-close) var(--toast-ease),filter var(--toast-close) var(--toast-ease)}
+.t-toast.is-open{opacity:1;transform:translateY(0) scale(1);filter:blur(0);transition:opacity var(--toast-open) var(--toast-ease),transform var(--toast-open) var(--toast-ease),filter var(--toast-open) var(--toast-ease)}
+#toast{position:fixed;z-index:90;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 32px);bottom:max(26px,env(safe-area-inset-bottom));padding:11px 18px;border-radius:14px;font-size:14px;font-weight:500;pointer-events:none}
+.row.t-toast{will-change:auto}
+
+/* Modal open/close (transitions.dev) */
+.t-modal{transform-origin:center;transform:scale(var(--modal-scale));opacity:0;pointer-events:none;transition:transform var(--modal-open-dur) var(--modal-ease),opacity var(--modal-open-dur) var(--modal-ease);will-change:transform,opacity}
+.t-modal.is-open{transform:scale(1);opacity:1;pointer-events:auto}
+.t-modal.is-closing{transform:scale(var(--modal-scale-close));opacity:0;pointer-events:none;transition:transform var(--modal-close-dur) var(--modal-ease),opacity var(--modal-close-dur) var(--modal-ease)}
+.lb{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px;background:rgba(10,8,16,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity var(--modal-open-dur) var(--ease)}
+.lb.show{opacity:1}
+.lb img{display:block;max-width:min(92vw,1100px);max-height:86vh;border-radius:16px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+
+@media (max-width:720px){
+  .chat{padding:0}
+  .main{border-radius:0;border:0}
+  .side{position:fixed;z-index:70;top:0;left:0;bottom:0;width:84%;max-width:300px;border-radius:0 22px 22px 0;padding-top:max(20px,env(safe-area-inset-top));transform:translateX(-105%);transition:transform 250ms var(--ease)}
+  .side.open{transform:translateX(0)}
+  .scrim{display:block;position:fixed;inset:0;z-index:65;background:rgba(10,8,16,.5);opacity:0;pointer-events:none;transition:opacity 250ms var(--ease)}
+  .scrim.show{opacity:1;pointer-events:auto}
+  .burger{display:grid}
+  .head{padding:max(0px,env(safe-area-inset-top)) 66px 0 14px;height:calc(60px + env(safe-area-inset-top))}
+  .messages{padding:16px 14px}
+  .row{max-width:86%}
+  .lock{padding:0 16px 8px}
+  .card{padding:28px 22px 22px}
+}
+@media (prefers-reduced-motion:reduce){
+  .rotor{animation:none}
+  .t-page-slide .t-page,.t-icon-swap .t-icon,.t-text-swap,.t-toast,.t-modal,.lb,.side,.scrim,.acc-body,.chev{transition:none!important}
+  .t-input{animation:none!important;transform:none!important}
+}
 </style>
 </head>
 <body>
 
-<button class="theme-toggle" id="theme-toggle" title="Ganti tema" aria-label="Ganti tema terang/gelap">🌙</button>
+<button class="theme glass" id="theme-toggle" aria-label="Ganti tema terang/gelap">
+  <span class="t-icon-swap" id="theme-icon" data-state="a">
+    <svg class="ico t-icon" data-icon="a" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <svg class="ico t-icon" data-icon="b" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+  </span>
+</button>
 
-<div id="app">
-  <div id="join-screen">
-    <div class="join-card">
-      <div class="brand">
-        <svg class="cipher-wheel" viewBox="0 0 40 40">
-          <g class="rotor">
-            <circle cx="20" cy="20" r="17" fill="none" stroke="#E3B23C" stroke-width="1.4" stroke-dasharray="2 4"/>
-            <circle cx="20" cy="20" r="11" fill="none" stroke="#7FA893" stroke-width="1.2"/>
-            <line x1="20" y1="3" x2="20" y2="9" stroke="#E3B23C" stroke-width="1.6"/>
-          </g>
-          <circle cx="20" cy="20" r="3" fill="#E3B23C"/>
-        </svg>
-        <div class="brand-name">CIPHER<span>ROOM</span><span class="beta-badge">BETA</span></div>
-      </div>
-      <div class="brand-sub">real-time · room-keyed · end-to-end</div>
+<div class="t-page-slide" id="stage" data-page="1">
 
-      <div class="field">
-        <label>Nama panggilan</label>
-        <input id="input-username" type="text" placeholder="mis. X" maxlength="20" autocomplete="off">
-      </div>
-      <div class="field">
-        <label>Kode ruang</label>
-        <input id="input-roomcode" type="text" placeholder="mis. 4444 atau kata sandi apa saja" maxlength="64" autocomplete="off">
-        <div class="field-hint">Kode ini tidak pernah dikirim ke server dalam bentuk asli. Browser menurunkan dua nilai darinya: sebuah ID ruang (hash satu-arah, untuk server tahu siapa gabung ke siapa) dan kunci enkripsi (tidak pernah meninggalkan perangkatmu).</div>
-      </div>
-
-      <button class="join-btn" id="btn-join">Masuk Ruang</button>
-      <div class="join-error" id="join-error"></div>
-      <div class="credit-line">dibuat oleh <span>Layka</span></div>
-    </div>
-  </div>
-
-  <div id="chat-screen" class="hidden">
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-    <div class="sidebar" id="sidebar">
-      <div class="brand">
-        <svg class="cipher-wheel-small" viewBox="0 0 40 40">
-          <g class="rotor">
-            <circle cx="20" cy="20" r="17" fill="none" stroke="#E3B23C" stroke-width="1.4" stroke-dasharray="2 4"/>
-            <circle cx="20" cy="20" r="11" fill="none" stroke="#7FA893" stroke-width="1.2"/>
-            <line x1="20" y1="3" x2="20" y2="9" stroke="#E3B23C" stroke-width="1.6"/>
-          </g>
-          <circle cx="20" cy="20" r="3" fill="#E3B23C"/>
-        </svg>
-        <div class="brand-name">CIPHER<span>ROOM</span><span class="beta-badge">BETA</span></div>
-      </div>
-
-      <div class="side-block">
-        <div class="side-label">Ruang</div>
-        <div class="room-code-display" id="side-roomcode">—</div>
-        <div class="status-line"><div class="dot"></div><span id="side-online-count">1 online</span></div>
-      </div>
-
-      <div class="side-block" style="flex:1; display:flex; flex-direction:column; min-height:0;">
-        <div class="side-label">Anggota</div>
-        <div class="member-list" id="member-list"></div>
-      </div>
-
-      <div class="conn-note ok" id="conn-note" style="margin-bottom:10px;">● terhubung</div>
-      <button class="leave-btn" id="btn-leave">← Keluar Ruang</button>
-    </div>
-
-    <div class="chat-main">
-      <div class="chat-header">
-        <button class="hamburger-btn" id="btn-hamburger" aria-label="Buka menu">☰</button>
-        <div class="chat-header-title">RUANG // <b id="header-roomcode">—</b></div>
-        <div class="header-actions">
-          <button class="icon-btn" id="btn-clear">Bersihkan</button>
-          <div class="user-badge" id="header-user-badge"></div>
+  <section class="t-page" data-page-id="1" id="page-join">
+    <div class="join">
+      <div class="card glass">
+        <div class="brand">
+          <div class="wheel" data-wheel></div>
+          <div class="brand-name">Cipher<em>Room</em><span class="beta">Beta</span></div>
         </div>
-      </div>
+        <p class="lead">real-time · room-keyed · end-to-end</p>
 
-      <div class="messages" id="messages">
-        <div class="msg-empty">
-          <svg class="wheel-mini" viewBox="0 0 40 40">
-            <g class="rotor">
-              <circle cx="20" cy="20" r="17" fill="none" stroke="#948AA0" stroke-width="1.4" stroke-dasharray="2 4"/>
-              <circle cx="20" cy="20" r="11" fill="none" stroke="#948AA0" stroke-width="1.2"/>
-              <line x1="20" y1="3" x2="20" y2="9" stroke="#948AA0" stroke-width="1.6"/>
-            </g>
-            <circle cx="20" cy="20" r="3" fill="#948AA0"/>
-          </svg>
-          — Awal percakapan —
+        <div class="field t-input-wrap">
+          <label for="input-username">Nama panggilan</label>
+          <div class="box t-input"><input id="input-username" type="text" placeholder="Cth: User" maxlength="20" autocomplete="off"></div>
+          <p class="t-error-msg" role="alert"></p>
         </div>
-      </div>
+        <div class="field t-input-wrap">
+          <label for="input-roomcode">Kode ruang</label>
+          <div class="box t-input"><input id="input-roomcode" type="text" placeholder="Cth: 1234" maxlength="30" autocomplete="off"></div>
+          <p class="t-error-msg" role="alert"></p>
+        </div>
+        <div class="hint" id="code-hint"><i></i><span id="code-hint-text">Kode yang sama akan masuk ke ruang yang sama.</span></div>
 
-      <div class="lock-note">🔒 Dienkripsi AES-GCM di perangkatmu sebelum dikirim. Server hanya meneruskan ciphertext, tidak menyimpannya ke disk.</div>
-      <div class="composer">
-        <input type="file" id="image-input" accept="image/*" class="hidden">
-        <button class="image-btn" id="btn-image" title="Kirim gambar" aria-label="Kirim gambar">🖼️</button>
-        <input id="input-message" type="text" placeholder="Ketik pesan…" autocomplete="off">
-        <button class="send-btn" id="btn-send">➤</button>
+        <button class="btn" id="btn-join"><span class="t-text-swap" id="btn-join-label">Masuk ruang</span></button>
+
+        <div class="acc" id="acc">
+          <button class="acc-btn" id="acc-btn" type="button" aria-expanded="false" aria-controls="acc-body">
+            <svg class="ico chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+            <span>Bagaimana keamanannya?</span>
+          </button>
+          <div class="acc-body" id="acc-body" role="region">
+            <div class="acc-inner"><p>Kode ruang tidak pernah dikirim apa adanya. Browser menurunkan ID ruang (hash satu arah) dan kunci AES-256 yang tidak pernah meninggalkan perangkatmu.</p></div>
+          </div>
+        </div>
+        <div class="credit">dibuat oleh <b>Layka</b></div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <section class="t-page" data-page-id="2" id="page-chat">
+    <div class="chat">
+      <div class="scrim" id="scrim"></div>
+      <aside class="side glass" id="sidebar">
+        <div class="brand">
+          <div class="wheel wheel-s" data-wheel></div>
+          <div class="brand-name">Cipher<em>Room</em></div>
+        </div>
+        <div class="status conn" id="conn"><span class="dot"></span><span class="t-text-swap" id="conn-text">Terhubung</span></div>
+        <div class="side-label">Anggota <span class="count" id="online-count">1</span></div>
+        <div class="members" id="member-list"></div>
+        <button class="ghost" id="btn-leave">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Keluar ruang
+        </button>
+      </aside>
+
+      <main class="main glass">
+        <header class="head">
+          <button class="tool burger" id="btn-hamburger" aria-label="Buka menu"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <div class="head-t">
+            <small>Ruang</small>
+            <div class="code"><span id="header-roomcode">—</span></div>
+          </div>
+          <button class="tool" id="btn-copy" aria-label="Salin kode ruang">
+            <span class="t-icon-swap" id="copy-icon" data-state="a">
+              <svg class="ico t-icon" data-icon="a" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <svg class="ico t-icon" data-icon="b" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            </span>
+          </button>
+          <span class="sp"></span>
+          <button class="link" id="btn-clear">Bersihkan tampilan</button>
+        </header>
+
+        <div class="messages" id="messages" aria-live="polite"></div>
+
+        <div class="lock"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Dienkripsi AES-GCM di perangkatmu. Server tidak menyimpan pesan ke disk.</div>
+        <div class="composer">
+          <input type="file" id="image-input" accept="image/*" class="hidden">
+          <button class="tool" id="btn-image" aria-label="Kirim gambar"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></button>
+          <input id="input-message" type="text" placeholder="Tulis pesan…" autocomplete="off" aria-label="Pesan">
+          <button class="send" id="btn-send" aria-label="Kirim" disabled><svg class="ico" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
+        </div>
+      </main>
+    </div>
+  </section>
 </div>
+
+<div class="lb hidden" id="lightbox" role="dialog" aria-modal="true" aria-label="Pratinjau gambar">
+  <div class="t-modal" id="lb-modal"><img id="lb-img" alt="Gambar dari ruang"></div>
+</div>
+<div class="t-toast glass" id="toast" role="status"></div>
 
 <script>
 (function(){
   "use strict";
-
-  // ---------------- Theme ----------------
-  function applyTheme(theme){
-    document.documentElement.setAttribute("data-theme", theme);
-    try{ localStorage.setItem("cr-theme", theme); }catch(e){ /* ignore */ }
-    const btn = document.getElementById("theme-toggle");
-    if(btn) btn.textContent = theme === "light" ? "🌙" : "☀️";
-    const meta = document.getElementById("theme-color-meta");
-    if(meta) meta.setAttribute("content", theme === "light" ? "#F3EEE3" : "#16121B");
-  }
-  (function initTheme(){
-    let saved = "dark";
-    try{ saved = localStorage.getItem("cr-theme") || "dark"; }catch(e){ /* ignore */ }
-    applyTheme(saved);
-  })();
-  document.getElementById("theme-toggle").addEventListener("click", () => {
-    const current = document.documentElement.getAttribute("data-theme");
-    applyTheme(current === "light" ? "dark" : "light");
-  });
-
-  let username = "";
-  let roomCode = "";
-  let roomId = "";       // SHA-256(roomCode + ":id") -> sent to server, identifies the channel
-  let roomKey = null;    // AES-GCM key derived separately -> never sent anywhere
-  let socket = null;
-
   const $ = (id) => document.getElementById(id);
+  const ms = (n, f) => { const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)); return Number.isFinite(v) ? v : f; };
+  const MAX_IMG = 170000; // karakter data-URL; harus muat di batas server
 
-  // ---------------- Crypto ----------------
-  async function sha256Hex(text){
-    const enc = new TextEncoder();
-    const digest = await crypto.subtle.digest("SHA-256", enc.encode(text));
-    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2,"0")).join("");
+  const WHEEL = '<svg viewBox="0 0 40 40" aria-hidden="true"><g class="rotor"><circle class="wa" cx="20" cy="20" r="17" fill="none" stroke-width="1.4" stroke-dasharray="2 4"/><circle class="ws" cx="20" cy="20" r="11" fill="none" stroke-width="1.2"/><line class="wa" x1="20" y1="3" x2="20" y2="9" stroke-width="1.6"/></g><circle class="wf" cx="20" cy="20" r="3"/></svg>';
+  document.querySelectorAll("[data-wheel]").forEach((e) => { e.innerHTML = WHEEL; });
+  const emptyHTML = (t) => '<div class="empty"><div class="wheel">' + WHEEL + '</div>' + t + '</div>';
+
+  // ---------- Theme (Icon swap) ----------
+  function applyTheme(t){
+    document.documentElement.dataset.theme = t;
+    try{ localStorage.setItem("cr-theme", t); }catch(e){}
+    $("theme-icon").dataset.state = t === "dark" ? "a" : "b";
+    $("theme-color-meta").content = t === "light" ? "#E8E6F0" : "#12111A";
   }
+  let saved = null; try{ saved = localStorage.getItem("cr-theme"); }catch(e){}
+  applyTheme(saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
+  $("theme-toggle").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light"));
 
+  // ---------- Motion helpers ----------
+  function swapText(el, text){ // Text states swap
+    if(el.textContent === text) return;
+    el.classList.add("is-exit");
+    setTimeout(() => {
+      el.textContent = text;
+      el.classList.remove("is-exit"); el.classList.add("is-enter-start");
+      void el.offsetWidth;
+      el.classList.remove("is-enter-start");
+    }, ms("--text-swap-dur", 150));
+  }
+  const errTimers = new WeakMap();
+  function fail(input, msg){ // Error state shake
+    const wrap = input.closest(".t-input-wrap"), box = wrap.querySelector(".t-input");
+    wrap.querySelector(".t-error-msg").textContent = msg;
+    wrap.classList.add("is-error"); box.classList.add("is-error");
+    box.classList.remove("is-shaking"); void box.offsetWidth; box.classList.add("is-shaking");
+    input.focus();
+    clearTimeout(errTimers.get(wrap));
+    errTimers.set(wrap, setTimeout(() => clearErr(wrap), 3000));
+  }
+  function clearErr(wrap){ wrap.classList.remove("is-error"); wrap.querySelector(".t-input").classList.remove("is-error"); }
+  document.querySelectorAll(".join input").forEach((i) => i.addEventListener("input", () => clearErr(i.closest(".t-input-wrap"))));
+  let toastT;
+  function toast(text){ // Toast open/close
+    const t = $("toast"); t.textContent = text; t.classList.add("is-open");
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("is-open"), 2600);
+  }
+  function showPage(p){ // Page side-by-side
+    $("stage").dataset.page = p;
+    $("page-join").inert = p !== "1"; $("page-chat").inert = p !== "2";
+  }
+  showPage("1");
+
+  // ---------- State ----------
+  let username = "", roomCode = "", roomId = "", roomKey = null, socket = null, entered = false;
+  const seen = new Set();
+
+  // ---------- Crypto (tidak berubah, kompatibel dengan versi lama) ----------
+  async function sha256Hex(text){
+    const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
   async function deriveRoomKey(code){
     const enc = new TextEncoder();
-    const baseKey = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveKey"]);
-    return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: enc.encode("cipherroom-enc-v1"), iterations: 150000, hash: "SHA-256" },
-      baseKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
-    );
+    const base = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({ name:"PBKDF2", salt: enc.encode("cipherroom-enc-v1"), iterations:150000, hash:"SHA-256" }, base, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]);
   }
-
-  function bufToB64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
-  function b64ToBuf(b64){
-    const bin = atob(b64);
-    const arr = new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
-    return arr.buffer;
+  function bufToB64(buf){ // chunked: aman untuk gambar besar
+    const a = new Uint8Array(buf); let s = "";
+    for(let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode.apply(null, a.subarray(i, i + 0x8000));
+    return btoa(s);
   }
-
+  function b64ToBuf(b64){ const bin = atob(b64), a = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a.buffer; }
   async function encryptPayload(obj){
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const enc = new TextEncoder();
-    const cipher = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, roomKey, enc.encode(JSON.stringify(obj)));
-    return { iv: bufToB64(iv), ct: bufToB64(cipher) };
+    const c = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, roomKey, new TextEncoder().encode(JSON.stringify(obj)));
+    return { iv: bufToB64(iv), ct: bufToB64(c) };
   }
-
   async function decryptPayload(entry){
     try{
-      const iv = new Uint8Array(b64ToBuf(entry.iv));
-      const plainBuf = await crypto.subtle.decrypt({ name:"AES-GCM", iv }, roomKey, b64ToBuf(entry.ct));
-      return JSON.parse(new TextDecoder().decode(plainBuf));
+      const p = await crypto.subtle.decrypt({ name:"AES-GCM", iv: new Uint8Array(b64ToBuf(entry.iv)) }, roomKey, b64ToBuf(entry.ct));
+      return JSON.parse(new TextDecoder().decode(p));
     }catch(e){ return null; }
   }
 
-  // ---------------- UI helpers ----------------
-  function formatTime(ts){
-    const d = new Date(ts);
-    return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
+  // ---------- Kekuatan kode ruang ----------
+  function strength(v){
+    let pool = 0;
+    if(/[a-z]/.test(v)) pool += 26; if(/[A-Z]/.test(v)) pool += 26; if(/\d/.test(v)) pool += 10; if(/[^A-Za-z0-9]/.test(v)) pool += 20;
+    const bits = v.length * Math.log2(pool || 1);
+    if(bits < 30) return ["weak", "Mudah ditebak. Pakai beberapa kata agar lebih aman."];
+    if(bits < 52) return ["mid", "Lumayan. Frasa yang lebih panjang lebih kuat."];
+    return ["good", "Kuat."];
   }
+  $("input-roomcode").addEventListener("input", (e) => {
+    const v = e.target.value, h = $("code-hint");
+    if(!v){ h.dataset.l = ""; $("code-hint-text").textContent = "Kode yang sama akan masuk ke ruang yang sama."; return; }
+    const [l, t] = strength(v); h.dataset.l = l; $("code-hint-text").textContent = t;
+  });
 
-  function clearEmptyState(){
-    const empty = document.querySelector(".msg-empty");
-    if(empty) empty.remove();
-  }
+  // ---------- Render ----------
+  const fmt = (ts) => { const d = new Date(ts); return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); };
+  const SAFE_IMG = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/;
 
-  function renderMessage(msg){
-    const wrap = document.createElement("div");
-    if(msg.system){
-      wrap.className = "msg-row system";
-      const bubble = document.createElement("div");
-      bubble.className = "msg-bubble";
-      bubble.textContent = msg.text;
-      wrap.appendChild(bubble);
-      return wrap;
-    }
+  function renderMessage(msg, live){
     const mine = msg.user === username;
-    wrap.className = "msg-row" + (mine ? " mine" : "");
-    const bubble = document.createElement("div");
-    bubble.className = "msg-bubble";
-    const meta = document.createElement("div");
-    meta.className = "msg-meta";
-    const nameSpan = document.createElement("span"); nameSpan.textContent = msg.user;
-    const timeSpan = document.createElement("span"); timeSpan.className = "time"; timeSpan.textContent = formatTime(msg.ts);
-    meta.appendChild(nameSpan); meta.appendChild(timeSpan);
-    const textDiv = document.createElement("div");
-    textDiv.className = "msg-text"; textDiv.textContent = msg.text || "";
-    bubble.appendChild(meta);
-    if(msg.text) bubble.appendChild(textDiv);
-    if(msg.image){
-      const imgWrap = document.createElement("div");
-      imgWrap.className = "msg-image-wrap";
-      const img = document.createElement("img");
-      img.className = "msg-image";
-      img.src = msg.image;
-      img.addEventListener("click", () => window.open(msg.image, "_blank"));
-      imgWrap.appendChild(img);
-      bubble.appendChild(imgWrap);
+    const row = document.createElement("div");
+    row.className = "row t-toast" + (mine ? " mine" : "");
+    const bubble = document.createElement("div"); bubble.className = "bubble";
+    const meta = document.createElement("div"); meta.className = "meta";
+    const n = document.createElement("span"); n.textContent = String(msg.user || "?");
+    const t = document.createElement("span"); t.className = "time"; t.textContent = fmt(msg.ts);
+    meta.append(n, t); bubble.appendChild(meta);
+    if(typeof msg.text === "string" && msg.text){ const d = document.createElement("div"); d.className = "text"; d.textContent = msg.text; bubble.appendChild(d); }
+    if(typeof msg.image === "string" && SAFE_IMG.test(msg.image)){
+      const img = document.createElement("img"); img.className = "pic"; img.src = msg.image; img.alt = "Gambar dari " + msg.user;
+      img.addEventListener("click", () => openLightbox(msg.image));
+      bubble.appendChild(img);
     }
-    wrap.appendChild(bubble);
-    return wrap;
+    row.appendChild(bubble);
+    if(live) requestAnimationFrame(() => row.classList.add("is-open")); else row.classList.add("is-open");
+    return row;
   }
-
-  function appendMessage(msg){
-    clearEmptyState();
-    const container = $("messages");
-    container.appendChild(renderMessage(msg));
-    container.scrollTop = container.scrollHeight;
+  function appendMessage(id, msg, live){
+    if(!msg || typeof msg !== "object") return;
+    if(id){ if(seen.has(id)) return; seen.add(id); }
+    const box = $("messages"), e = box.querySelector(".empty"); if(e) e.remove();
+    const near = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
+    box.appendChild(renderMessage(msg, live));
+    if(!live || near || msg.user === username) box.scrollTo({ top: box.scrollHeight, behavior: live ? "smooth" : "auto" });
   }
-
   function renderMembers(members){
-    $("side-online-count").textContent = members.length + " online";
-    const list = $("member-list");
-    list.innerHTML = "";
-    [...members].sort().forEach(name => {
-      const row = document.createElement("div");
-      row.className = "member-row";
-      const dot = document.createElement("div"); dot.className = "member-dot";
-      row.appendChild(dot);
-      const label = document.createElement("span"); label.textContent = name;
-      row.appendChild(label);
-      if(name === username){
-        const you = document.createElement("span"); you.className = "member-you"; you.textContent = "kamu";
-        row.appendChild(you);
-      }
-      list.appendChild(row);
+    $("online-count").textContent = members.length;
+    const list = $("member-list"); list.textContent = "";
+    [...members].sort((a, b) => a.localeCompare(b)).forEach((name) => {
+      const r = document.createElement("div"); r.className = "member";
+      const a = document.createElement("div"); a.className = "avatar"; a.textContent = name.charAt(0).toUpperCase();
+      const s = document.createElement("span"); s.className = "n"; s.textContent = name;
+      r.append(a, s);
+      if(name === username){ const y = document.createElement("span"); y.className = "you"; y.textContent = "kamu"; r.appendChild(y); }
+      list.appendChild(r);
     });
   }
+  function resetMessages(){ $("messages").innerHTML = emptyHTML("Belum ada pesan. Mulai percakapan di ruang ini."); }
 
-  // ---------------- Actions ----------------
+  // ---------- Lightbox (Modal open/close) ----------
+  function openLightbox(src){
+    $("lb-img").src = src; $("lightbox").classList.remove("hidden");
+    requestAnimationFrame(() => { $("lightbox").classList.add("show"); $("lb-modal").classList.remove("is-closing"); $("lb-modal").classList.add("is-open"); });
+  }
+  function closeLightbox(){
+    if($("lightbox").classList.contains("hidden")) return;
+    $("lb-modal").classList.remove("is-open"); $("lb-modal").classList.add("is-closing"); $("lightbox").classList.remove("show");
+    setTimeout(() => { $("lightbox").classList.add("hidden"); $("lb-modal").classList.remove("is-closing"); $("lb-img").removeAttribute("src"); }, ms("--modal-close-dur", 150));
+  }
+  $("lightbox").addEventListener("click", closeLightbox);
+
+  // ---------- Join / leave ----------
+  function setBusy(b, label){ $("btn-join").disabled = b; swapText($("btn-join-label"), label || "Masuk ruang"); }
+  function setConn(ok){
+    $("conn").classList.toggle("bad", !ok);
+    swapText($("conn-text"), ok ? "Terhubung" : "Terputus, mencoba lagi…");
+  }
+  function dropSocket(){ if(socket){ socket.removeAllListeners(); socket.disconnect(); socket = null; } }
+
   async function joinRoom(){
-    const uInput = $("input-username").value.trim();
-    const rInput = $("input-roomcode").value.trim();
-    const errorEl = $("join-error");
-    errorEl.textContent = "";
+    const u = $("input-username").value.trim(), r = $("input-roomcode").value.trim();
+    if(!u) return fail($("input-username"), "Isi nama panggilan dulu.");
+    if(!r) return fail($("input-roomcode"), "Isi kode ruang dulu.");
+    setBusy(true, "Menurunkan kunci…");
+    username = u; roomCode = r; seen.clear(); entered = false;
+    try{ roomId = await sha256Hex(roomCode + ":id"); roomKey = await deriveRoomKey(roomCode); }
+    catch(e){ setBusy(false); toast("Browser ini tidak mendukung enkripsi yang dibutuhkan."); return; }
 
-    if(!uInput){ errorEl.textContent = "Isi nama panggilan dulu."; return; }
-    if(!rInput){ errorEl.textContent = "Isi kode ruang dulu."; return; }
-
-    $("btn-join").disabled = true;
-    $("btn-join").textContent = "Menurunkan kunci…";
-
-    username = uInput;
-    roomCode = rInput;
-
-    try{
-      roomId = await sha256Hex(roomCode + ":id");
-      roomKey = await deriveRoomKey(roomCode);
-    }catch(e){
-      errorEl.textContent = "Gagal menyiapkan enkripsi di browser ini.";
-      $("btn-join").disabled = false;
-      $("btn-join").textContent = "Masuk Ruang";
-      return;
-    }
-
+    dropSocket();
     socket = io({ transports: ["websocket", "polling"] });
-
     socket.on("connect", () => {
+      setConn(true);
       socket.emit("join", { roomId, username }, async (res) => {
         if(!res || !res.ok){
-          errorEl.textContent = res && res.error === "room_full" ? "Ruang penuh." : "Gagal bergabung ke server.";
-          $("btn-join").disabled = false;
-          $("btn-join").textContent = "Masuk Ruang";
-          socket.disconnect();
-          return;
+          toast(res && res.error === "room_full" ? "Ruang penuh." : "Gagal bergabung ke server.");
+          setBusy(false); dropSocket(); return;
         }
-
-        $("join-screen").classList.add("hidden");
-        $("chat-screen").classList.remove("hidden");
-        $("side-roomcode").textContent = roomCode;
-        $("header-roomcode").textContent = roomCode;
-        $("header-user-badge").textContent = username.charAt(0).toUpperCase();
-
+        if(!entered){
+          entered = true;
+          $("header-roomcode").textContent = roomCode;
+          resetMessages(); showPage("2");
+        }
         renderMembers(res.members.includes(username) ? res.members : [...res.members, username]);
-
-        for(const entry of res.recent){
-          const payload = await decryptPayload(entry);
-          if(payload) appendMessage(payload);
-        }
+        for(const entry of res.recent){ appendMessage(entry.id, await decryptPayload(entry), false); }
       });
     });
-
+    socket.on("connect_error", () => { if(!entered){ setBusy(false); toast("Tidak bisa terhubung ke server."); } else setConn(false); });
+    socket.on("disconnect", () => setConn(false));
     socket.on("presence", ({ members }) => renderMembers(members));
-
-    socket.on("message", async (entry) => {
-      const payload = await decryptPayload(entry);
-      if(payload) appendMessage(payload);
-    });
-
-    socket.on("disconnect", () => {
-      $("conn-note").textContent = "● terputus, mencoba lagi…";
-      $("conn-note").className = "conn-note bad";
-    });
-    socket.on("connect", () => {
-      $("conn-note").textContent = "● terhubung";
-      $("conn-note").className = "conn-note ok";
-    });
-  }
-
-  async function sendMessage(text){
-    if(!text.trim() || !socket) return;
-    const payload = { user: username, text: text.trim(), ts: Date.now() };
-    const enc = await encryptPayload(payload);
-    socket.emit("message", enc);
-  }
-
-  function compressImage(file){
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("read_failed"));
-      reader.onload = () => {
-        const img = new Image();
-        img.onerror = () => reject(new Error("decode_failed"));
-        img.onload = () => {
-          const MAX_DIM = 1000;
-          let { width, height } = img;
-          if(width > MAX_DIM || height > MAX_DIM){
-            const scale = MAX_DIM / Math.max(width, height);
-            width = Math.round(width * scale);
-            height = Math.round(height * scale);
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = width; canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", 0.72));
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  async function sendImage(file){
-    if(!file || !socket) return;
-    if(!file.type.startsWith("image/")){
-      alert("File yang dipilih bukan gambar.");
-      return;
-    }
-    try{
-      const dataUrl = await compressImage(file);
-      const payload = { user: username, image: dataUrl, ts: Date.now() };
-      const enc = await encryptPayload(payload);
-      socket.emit("message", enc);
-    }catch(e){
-      alert("Gagal memproses gambar. Coba gambar lain.");
-    }
+    socket.on("message", async (entry) => appendMessage(entry.id, await decryptPayload(entry), true));
   }
 
   function leaveRoom(){
-    if(socket){ socket.emit("leave"); socket.disconnect(); socket = null; }
-    closeSidebar();
-    $("chat-screen").classList.add("hidden");
-    $("join-screen").classList.remove("hidden");
-    $("btn-join").disabled = false;
-    $("btn-join").textContent = "Masuk Ruang";
-    $("input-roomcode").value = "";
-    $("messages").innerHTML = '<div class="msg-empty"><svg class="wheel-mini" viewBox="0 0 40 40"><g class="rotor"><circle cx="20" cy="20" r="17" fill="none" stroke="#948AA0" stroke-width="1.4" stroke-dasharray="2 4"/><circle cx="20" cy="20" r="11" fill="none" stroke="#948AA0" stroke-width="1.2"/><line x1="20" y1="3" x2="20" y2="9" stroke="#948AA0" stroke-width="1.6"/></g><circle cx="20" cy="20" r="3" fill="#948AA0"/></svg>— Awal percakapan —</div>';
+    if(socket) socket.emit("leave");
+    dropSocket(); entered = false; roomKey = null; seen.clear();
+    closeSidebar(); showPage("1"); setBusy(false);
+    $("input-roomcode").value = ""; $("code-hint").dataset.l = ""; $("code-hint-text").textContent = "Kode yang sama akan masuk ke ruang yang sama.";
+    setTimeout(() => { if(!entered) $("messages").textContent = ""; }, 300);
   }
 
-  // ---------------- Mobile sidebar drawer ----------------
-  function openSidebar(){ $("sidebar").classList.add("open"); $("sidebar-overlay").classList.add("show"); }
-  function closeSidebar(){ $("sidebar").classList.remove("open"); $("sidebar-overlay").classList.remove("show"); }
-  $("btn-hamburger").addEventListener("click", openSidebar);
-  $("sidebar-overlay").addEventListener("click", closeSidebar);
+  // ---------- Kirim ----------
+  async function send(payload){
+    if(!socket || !socket.connected){ toast("Belum terhubung. Coba lagi sebentar."); return false; }
+    const enc = await encryptPayload(payload);
+    socket.emit("message", enc, (res) => {
+      if(res && res.ok === false) toast(res.error === "too_large" ? "Pesan terlalu besar untuk dikirim." : res.error === "rate_limited" ? "Terlalu cepat. Tunggu sebentar." : "Pesan gagal terkirim.");
+    });
+    return true;
+  }
+  async function sendText(){
+    const i = $("input-message"), t = i.value.trim(); if(!t) return;
+    i.value = ""; $("btn-send").disabled = true;
+    if(!(await send({ user: username, text: t, ts: Date.now() }))){ i.value = t; $("btn-send").disabled = false; }
+    i.focus();
+  }
+  function compressImage(file){
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let dim = 1280, q = 0.78;
+        for(let i = 0; i < 8; i++){
+          const s = Math.min(1, dim / Math.max(img.width, img.height));
+          const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(img.width * s)); c.height = Math.max(1, Math.round(img.height * s));
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          const out = c.toDataURL("image/jpeg", q);
+          if(out.length <= MAX_IMG) return resolve(out);
+          dim *= 0.8; q = Math.max(0.5, q - 0.07);
+        }
+        reject(new Error("too_big"));
+      };
+      img.src = url;
+    });
+  }
+  async function sendImage(file){
+    if(!file) return;
+    if(!file.type.startsWith("image/")){ toast("File yang dipilih bukan gambar."); return; }
+    try{ await send({ user: username, image: await compressImage(file), ts: Date.now() }); }
+    catch(e){ toast("Gambar tidak bisa diproses. Coba gambar lain."); }
+  }
 
-  // ---------------- Wire up ----------------
+  // ---------- Drawer & wiring ----------
+  function openSidebar(){ $("sidebar").classList.add("open"); $("scrim").classList.add("show"); }
+  function closeSidebar(){ $("sidebar").classList.remove("open"); $("scrim").classList.remove("show"); }
+  $("btn-hamburger").addEventListener("click", openSidebar);
+  $("scrim").addEventListener("click", closeSidebar);
+  document.addEventListener("keydown", (e) => { if(e.key === "Escape"){ closeLightbox(); closeSidebar(); } });
+
+  $("acc-btn").addEventListener("click", () => {
+    const open = $("acc-btn").getAttribute("aria-expanded") !== "true";
+    $("acc-btn").setAttribute("aria-expanded", open);
+    $("acc-body").classList.toggle("open", open);
+  });
   $("btn-join").addEventListener("click", joinRoom);
   $("input-username").addEventListener("keydown", (e) => { if(e.key === "Enter") $("input-roomcode").focus(); });
-  $("input-roomcode").addEventListener("keydown", (e) => { if(e.key === "Enter") joinRoom(); });
+  $("input-roomcode").addEventListener("keydown", (e) => { if(e.key === "Enter" && !e.isComposing) joinRoom(); });
   $("btn-leave").addEventListener("click", leaveRoom);
-  $("btn-clear").addEventListener("click", () => {
-    $("messages").innerHTML = '<div class="msg-empty"><svg class="wheel-mini" viewBox="0 0 40 40"><g class="rotor"><circle cx="20" cy="20" r="17" fill="none" stroke="#948AA0" stroke-width="1.4" stroke-dasharray="2 4"/><circle cx="20" cy="20" r="11" fill="none" stroke="#948AA0" stroke-width="1.2"/><line x1="20" y1="3" x2="20" y2="9" stroke="#948AA0" stroke-width="1.6"/></g><circle cx="20" cy="20" r="3" fill="#948AA0"/></svg>— Awal percakapan (tampilan lokal dibersihkan) —</div>';
+  $("btn-clear").addEventListener("click", () => { resetMessages(); toast("Tampilan dibersihkan di perangkat ini."); });
+  $("btn-copy").addEventListener("click", () => {
+    navigator.clipboard.writeText(roomCode).then(() => {
+      $("copy-icon").dataset.state = "b"; toast("Kode ruang disalin.");
+      setTimeout(() => { $("copy-icon").dataset.state = "a"; }, 1600);
+    }).catch(() => toast("Tidak bisa menyalin kode."));
   });
-  $("btn-send").addEventListener("click", () => {
-    const input = $("input-message");
-    sendMessage(input.value);
-    input.value = "";
-    input.focus();
-  });
-  $("input-message").addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){
-      const input = $("input-message");
-      sendMessage(input.value);
-      input.value = "";
-    }
-  });
+  $("input-message").addEventListener("input", (e) => { $("btn-send").disabled = !e.target.value.trim(); });
+  $("input-message").addEventListener("keydown", (e) => { if(e.key === "Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); sendText(); } });
+  $("btn-send").addEventListener("click", sendText);
   $("btn-image").addEventListener("click", () => $("image-input").click());
-  $("image-input").addEventListener("change", (e) => {
-    const file = e.target.files && e.target.files[0];
-    if(file) sendImage(file);
-    e.target.value = ""; // reset so picking the same file again still fires 'change'
-  });
+  $("image-input").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if(f) sendImage(f); e.target.value = ""; });
 })();
 </script>
 </body>
