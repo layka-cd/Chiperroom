@@ -171,6 +171,7 @@ input:focus-visible{ outline: none; }
 
 .ico{ width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 .ico-sm{ width: 15px; height: 15px; }
+.ico-fill{ fill: currentColor; stroke: none; }
 
 /* latar: tiga cahaya lembut di belakang kaca */
 .ambient{
@@ -554,7 +555,7 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
   pointer-events: none;
 }
 .composer{
-  max-width: 820px; margin: 0 auto; display: flex; align-items: center; gap: 6px;
+  position: relative; max-width: 820px; margin: 0 auto; display: flex; align-items: center; gap: 6px;
   padding: 6px; border-radius: 22px; pointer-events: auto;
   background: var(--glass-strong); border: 1px solid var(--glass-line);
   -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
@@ -579,6 +580,37 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
 .send-btn:active:not(:disabled){ transform: scale(.93); }
 .send-btn:disabled{ opacity: .35; transform: scale(.94); cursor: default; }
 .composer-note{ max-width: 820px; margin: 8px auto 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; color: var(--ink-3); pointer-events: none; }
+
+
+/* voice note: bar rekam */
+.rec-bar{ display: none; flex: 1; min-width: 0; align-items: center; gap: 12px; padding-left: 2px; }
+.composer.is-recording .rec-bar{ display: flex; animation: rec-in var(--toast-open) var(--toast-ease) both; }
+.composer.is-recording #btn-image, .composer.is-recording #input-message{ display: none; }
+.composer .rec-cancel:hover{ color: var(--danger); }
+.rec-dot{ width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%; background: var(--danger); animation: rec-pulse 1.3s ease-in-out infinite; }
+.rec-time{ min-width: 38px; font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.rec-label{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--ink-3); }
+.rec-progress{ display: none; position: absolute; left: 22px; right: 22px; bottom: 3px; height: 2px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.composer.is-recording .rec-progress{ display: block; }
+.rec-progress i{ display: block; height: 100%; width: 0; background: var(--danger); transition: width .25s linear; }
+@keyframes rec-in{ from{ opacity: 0; transform: translateY(6px); filter: blur(var(--toast-blur)); } }
+@keyframes rec-pulse{ 0%, 100%{ opacity: 1; transform: scale(1); } 50%{ opacity: .45; transform: scale(.82); } }
+
+/* voice note: pemutar di gelembung */
+.msg-bubble.has-audio{ padding: 8px 14px 8px 8px; white-space: normal; }
+.voice{ display: flex; align-items: center; gap: 10px; min-width: 220px; }
+.voice-btn{
+  width: 38px; height: 38px; flex-shrink: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
+  background: linear-gradient(180deg, var(--accent-hi), var(--accent)); color: var(--accent-ink);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5); transition: transform .12s ease, filter .15s ease;
+}
+.voice-btn:hover{ filter: brightness(1.06); }
+.voice-btn:active{ transform: scale(.92); }
+.voice-btn .ico{ width: 16px; height: 16px; }
+.voice-bars{ flex: 1; min-width: 0; height: 28px; display: flex; align-items: center; gap: 2px; color: var(--ink); }
+.voice-bars i{ flex: 1; min-width: 2px; max-width: 4px; border-radius: 2px; background: currentColor; opacity: .26; transition: opacity .15s ease, background-color .15s ease; }
+.voice-bars i.on{ opacity: 1; background: var(--accent-text); }
+.voice-time{ min-width: 34px; text-align: right; font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 /* toast */
 .toast-region{
@@ -691,6 +723,9 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
   <symbol id="i-chip" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a.8.8 0 0 0 1.2.7l12-7.5a.8.8 0 0 0 0-1.4l-12-7.5A.8.8 0 0 0 7 4.5Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
   <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
 </svg>
 
@@ -728,7 +763,7 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
           <label for="input-username">Nama panggilan</label>
           <div class="control t-input">
             <svg class="ico"><use href="#i-user"/></svg>
-            <input id="input-username" type="text" placeholder="mis. X" maxlength="20" autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby="join-error">
+            <input id="input-username" type="text" placeholder="mis. Rani" maxlength="20" autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby="join-error">
           </div>
         </div>
         <div class="field" style="margin-bottom:0">
@@ -852,7 +887,19 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
             <input type="file" id="image-input" accept="image/*" hidden>
             <button class="icon-btn" id="btn-image" type="button" aria-label="Kirim gambar" title="Kirim gambar"><svg class="ico"><use href="#i-image"/></svg></button>
             <input id="input-message" type="text" placeholder="Ketik pesan" maxlength="2000" autocomplete="off" enterkeyhint="send" aria-label="Pesan">
-            <button class="send-btn" id="btn-send" type="submit" aria-label="Kirim pesan" disabled><svg class="ico"><use href="#i-send"/></svg></button>
+            <div class="rec-bar" id="rec-bar" aria-hidden="true">
+              <button class="icon-btn rec-cancel" id="rec-cancel" type="button" aria-label="Batalkan rekaman" title="Batalkan"><svg class="ico"><use href="#i-trash"/></svg></button>
+              <span class="rec-dot"></span>
+              <span class="rec-time" id="rec-time">0:00</span>
+              <span class="rec-label">Merekam, ketuk kirim</span>
+            </div>
+            <button class="send-btn" id="btn-send" type="submit" aria-label="Rekam voice note" title="Rekam voice note">
+              <span class="t-icon-swap" id="send-swap" data-state="a">
+                <span class="t-icon" data-icon="a"><svg class="ico"><use href="#i-mic"/></svg></span>
+                <span class="t-icon" data-icon="b"><svg class="ico"><use href="#i-send"/></svg></span>
+              </span>
+            </button>
+            <div class="rec-progress" aria-hidden="true"><i id="rec-progress"></i></div>
           </form>
           <p class="composer-note"><svg class="ico ico-sm"><use href="#i-lock"/></svg>Dienkripsi di perangkatmu sebelum dikirim</p>
         </div>
@@ -1063,12 +1110,16 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
     if(!p || typeof p !== "object") return null;
     const text = typeof p.text === "string" ? p.text.slice(0, 4000) : "";
     const image = (typeof p.image === "string" && p.image.length < 600000 && /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(p.image)) ? p.image : "";
-    if(!text && !image) return null;
+    const audio = (typeof p.audio === "string" && p.audio.length < 400000 && /^[A-Za-z0-9+/=]+$/.test(p.audio) &&
+                   typeof p.amime === "string" && /^audio\/(webm|mp4|ogg|mpeg|aac)$/.test(p.amime)) ? p.audio : "";
+    if(!text && !image && !audio) return null;
     return {
       user: typeof p.user === "string" && p.user.trim() ? p.user.slice(0, 24) : "Anonim",
       uid: typeof p.uid === "string" ? p.uid.slice(0, 32) : "",
       ts: Number.isFinite(p.ts) ? p.ts : Date.now(),
-      text, image
+      text, image,
+      audio, amime: audio ? p.amime : "",
+      dur: audio && Number.isFinite(p.dur) ? Math.min(Math.max(p.dur, 0), 120) : 0
     };
   }
 
@@ -1151,9 +1202,77 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
       bubble.appendChild(btn);
       row._img = img;
     }
+    if(msg.audio){
+      bubble.classList.add("has-audio");
+      bubble.appendChild(buildVoice(msg));
+    }
     col.appendChild(bubble);
     row.appendChild(col);
     return row;
+  }
+
+  // ---------------- Voice note: pemutar ----------------
+  let playingAudio = null;
+  const fmtDur = (s) => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  function b64ToBlob(b64, mime){
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+  function buildVoice(msg){
+    const wrap = el("div", "voice");
+    const btn = el("button", "voice-btn");
+    btn.type = "button";
+    btn.setAttribute("aria-label", "Putar voice note dari " + msg.user);
+    const swap = el("span", "t-icon-swap");
+    swap.setAttribute("data-state", "a");
+    const ia = el("span", "t-icon"); ia.dataset.icon = "a"; ia.appendChild(icon("i-play", "ico-fill"));
+    const ib = el("span", "t-icon"); ib.dataset.icon = "b"; ib.appendChild(icon("i-pause", "ico-fill"));
+    swap.append(ia, ib); btn.appendChild(swap);
+
+    // batang gelombang semu (deterministik dari waktu pesan), murah dan tanpa decode audio
+    const bars = el("div", "voice-bars");
+    bars.setAttribute("aria-hidden", "true");
+    const N = 30;
+    let seed = (Math.floor(msg.ts) % 2147483647) || 7;
+    const barEls = [];
+    for(let i = 0; i < N; i++){
+      seed = (seed * 48271) % 2147483647;
+      const h = 26 + (seed % 1000) / 1000 * 74;
+      const b = el("i"); b.style.height = h.toFixed(0) + "%";
+      bars.appendChild(b); barEls.push(b);
+    }
+    const time = el("span", "voice-time");
+    const total = msg.dur || 0;
+    time.textContent = fmtDur(total);
+    wrap.append(btn, bars, time);
+
+    let audio = null;
+    const paint = (frac) => { const on = Math.round(Math.min(Math.max(frac, 0), 1) * N); barEls.forEach((b, i) => b.classList.toggle("on", i < on)); };
+    function ensureAudio(){
+      if(audio) return audio;
+      audio = new Audio(URL.createObjectURL(b64ToBlob(msg.audio, msg.amime)));
+      audio.preload = "auto";
+      audio.addEventListener("play", () => swap.setAttribute("data-state", "b"));
+      audio.addEventListener("pause", () => swap.setAttribute("data-state", "a"));
+      audio.addEventListener("timeupdate", () => {
+        const dur = total || (Number.isFinite(audio.duration) ? audio.duration : 0);
+        if(dur){ paint(audio.currentTime / dur); time.textContent = fmtDur(Math.max(0, dur - audio.currentTime)); }
+      });
+      audio.addEventListener("ended", () => { paint(0); time.textContent = fmtDur(total || audio.currentTime); swap.setAttribute("data-state", "a"); if(playingAudio === audio) playingAudio = null; });
+      audio.addEventListener("error", () => { swap.setAttribute("data-state", "a"); toast("Browser ini tidak bisa memutar voice note ini.", "error"); });
+      return audio;
+    }
+    btn.addEventListener("click", () => {
+      const a = ensureAudio();
+      if(a.paused){
+        if(playingAudio && playingAudio !== a) playingAudio.pause();
+        playingAudio = a;
+        a.play().catch(() => {});
+      }else a.pause();
+    });
+    return wrap;
   }
 
   function appendMessage(msg, opts){
@@ -1339,6 +1458,8 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
   }
 
   function leaveRoom(){
+    stopRecording(true);
+    if(playingAudio){ playingAudio.pause(); playingAudio = null; }
     const s = socket; socket = null;
     if(s){ s.emit("leave"); s.disconnect(); }
     joined = false; roomKey = null; roomId = ""; roomCode = "";
@@ -1358,8 +1479,8 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
     toast("Belum terhubung ke server. Pesan belum terkirim.", "error");
     return false;
   }
-  function emitEncrypted(enc){
-    socket.emit("message", enc, (res) => {
+  function emitEncrypted(enc, extra){
+    socket.emit("message", extra ? Object.assign({}, enc, extra) : enc, (res) => {
       if(res && res.ok === false){
         toast(res.error === "rate_limited" ? "Terlalu cepat. Tunggu sebentar lalu kirim lagi." :
               res.error === "too_large" ? "Pesan terlalu besar untuk dikirim." : "Pesan gagal dikirim.", "error");
@@ -1425,10 +1546,114 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
   }
 
   const input = $("input-message");
-  function updateSend(){ $("btn-send").disabled = !input.value.trim(); }
+  const sendBtn = $("btn-send"), sendSwap = $("send-swap");
+  function updateSend(){
+    const hasText = !!input.value.trim();
+    const mode = rec || hasText ? "b" : "a";
+    sendSwap.setAttribute("data-state", mode);
+    const label = rec ? "Kirim voice note" : hasText ? "Kirim pesan" : "Rekam voice note";
+    sendBtn.setAttribute("aria-label", label);
+    sendBtn.title = label;
+  }
   input.addEventListener("input", updateSend);
+
+  // ---------------- Voice note: perekam ----------------
+  // Ringan: MediaRecorder bawaan browser (Opus mono 16 kbps), tanpa library dan tanpa konversi di server.
+  const MAX_VOICE_SEC = 60;
+  const VOICE_BPS = 16000;
+  let rec = null;
+  function audioBudgetBytes(){
+    // plaintext JSON ≤ 0.75 × batas ciphertext; audio base64 memakai 4/3 dari byte aslinya
+    return Math.min(150000, Math.floor((maxCt * 0.75 - 300) * 0.75));
+  }
+  function pickMime(){
+    const list = ["audio/webm;codecs=opus", "audio/mp4;codecs=mp4a.40.2", "audio/mp4", "audio/ogg;codecs=opus"];
+    for(const m of list){ try{ if(MediaRecorder.isTypeSupported(m)) return m; }catch(e){} }
+    return "";
+  }
+  function blobToB64(blob){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).split(",")[1] || "");
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(blob);
+    });
+  }
+  async function startRecording(){
+    if(rec) return;
+    if(!connected()) return;
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+      toast("Browser ini belum mendukung rekam suara.", "error"); return;
+    }
+    const budget = audioBudgetBytes();
+    if(budget < 20000){ toast("Server ini belum mendukung voice note. Perbarui server.js.", "error"); return; }
+    let stream;
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    }catch(e){
+      toast(e && e.name === "NotAllowedError" ? "Izin mikrofon ditolak. Aktifkan di pengaturan browser." : "Mikrofon tidak ditemukan.", "error");
+      return;
+    }
+    const wanted = pickMime();
+    let mr;
+    try{ mr = new MediaRecorder(stream, wanted ? { mimeType: wanted, audioBitsPerSecond: VOICE_BPS } : { audioBitsPerSecond: VOICE_BPS }); }
+    catch(e){ stream.getTracks().forEach(t => t.stop()); toast("Gagal memulai rekaman.", "error"); return; }
+    const state = { stream, mr, chunks: [], bytes: 0, t0: performance.now(), budget, cancelled: false, timer: 0,
+                    mime: (mr.mimeType || wanted || "audio/webm").split(";")[0] };
+    rec = state;
+    mr.ondataavailable = (e) => { if(e.data && e.data.size){ state.chunks.push(e.data); state.bytes += e.data.size; } };
+    mr.onstop = () => finishRecording(state);
+    mr.start(1000);
+    $("composer").classList.add("is-recording");
+    $("rec-bar").setAttribute("aria-hidden", "false");
+    $("rec-time").textContent = "0:00";
+    $("rec-progress").style.width = "0%";
+    state.timer = setInterval(() => {
+      const sec = (performance.now() - state.t0) / 1000;
+      $("rec-time").textContent = fmtDur(sec);
+      $("rec-progress").style.width = Math.min(100, sec / MAX_VOICE_SEC * 100) + "%";
+      if(sec >= MAX_VOICE_SEC || state.bytes >= state.budget * 0.85) stopRecording(false);
+    }, 250);
+    updateSend();
+  }
+  function stopRecording(cancel){
+    if(!rec) return;
+    const state = rec;
+    state.cancelled = !!cancel;
+    state.dur = (performance.now() - state.t0) / 1000;
+    clearInterval(state.timer);
+    if(state.mr.state !== "inactive") state.mr.stop(); else finishRecording(state);
+  }
+  async function finishRecording(state){
+    if(rec !== state) return;
+    rec = null;
+    state.stream.getTracks().forEach(t => t.stop());
+    $("composer").classList.remove("is-recording");
+    $("rec-bar").setAttribute("aria-hidden", "true");
+    updateSend();
+    if(state.cancelled) return;
+    if(state.dur < 0.8){ toast("Rekaman terlalu singkat.", "error"); return; }
+    const blob = new Blob(state.chunks, { type: state.mime });
+    if(blob.size > state.budget){ toast("Rekaman terlalu besar untuk dikirim. Coba lebih singkat.", "error"); return; }
+    if(!connected()) return;
+    try{
+      const audio = await blobToB64(blob);
+      const enc = await encryptPayload({ uid: myUid, user: username, audio, amime: state.mime, dur: Math.round(state.dur * 10) / 10, ts: Date.now() });
+      emitEncrypted(enc, { eph: true }); // eph: server hanya meneruskan, tidak menyimpan
+    }catch(e){
+      toast("Gagal mengirim voice note.", "error");
+    }
+  }
+  $("rec-cancel").addEventListener("click", () => stopRecording(true));
+  window.addEventListener("pagehide", () => stopRecording(true));
+
+  sendBtn.addEventListener("click", (e) => {
+    if(rec){ e.preventDefault(); stopRecording(false); return; }
+    if(!input.value.trim()){ e.preventDefault(); startRecording(); }
+  });
   $("composer").addEventListener("submit", (e) => {
     e.preventDefault();
+    if(rec) return;
     const text = input.value.trim();
     if(!text || !connected()) return;
     input.value = "";
@@ -1503,7 +1728,8 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
   lb.addEventListener("click", (e) => { if(e.target === lb) closeLightbox(); });
   document.addEventListener("keydown", (e) => {
     if(e.key !== "Escape") return;
-    if(lb.classList.contains("is-open")) closeLightbox();
+    if(rec) stopRecording(true);
+    else if(lb.classList.contains("is-open")) closeLightbox();
     else closeSidebar();
   });
 
