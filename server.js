@@ -30,6 +30,8 @@ const rooms = new Map();
 
 const MAX_BUFFER_PER_ROOM = 50; // recent ciphertext messages kept for late joiners in this session
 const MAX_BUFFER_BYTES = 4 * 1024 * 1024; // total ciphertext per room (gambar bisa besar, jadi dibatasi per byte juga)
+const MAX_TOTAL_BUFFER_BYTES = 48 * 1024 * 1024; // plafon RAM untuk semua buffer ruang (Render free tier = 512MB)
+let totalBufferBytes = 0;
 const MAX_MEMBERS_PER_ROOM = 60;
 const MAX_IV_CHARS = 64;
 const MAX_CT_CHARS = 400000; // ~300KB data asli; klien membaca batas ini dari ack "join"
@@ -52,6 +54,7 @@ function presenceList(room) {
 function cleanupRoomIfEmpty(roomId) {
   const room = rooms.get(roomId);
   if (room && room.members.size === 0) {
+    totalBufferBytes -= room.bufferBytes;
     rooms.delete(roomId); // buffer is dropped too — no history survives an empty room
   }
 }
@@ -118,14 +121,23 @@ io.on("connection", (socket) => {
       iv,
       ct
     };
-    room.buffer.push(entry);
-    room.bufferBytes += iv.length + ct.length;
-    while (
-      room.buffer.length > 1 &&
-      (room.buffer.length > MAX_BUFFER_PER_ROOM || room.bufferBytes > MAX_BUFFER_BYTES)
-    ) {
-      const old = room.buffer.shift();
-      room.bufferBytes -= old.iv.length + old.ct.length;
+    // Pesan "eph" (voice note) hanya diteruskan, tidak disimpan di RAM server.
+    // Pesan lain disimpan untuk anggota yang masuk belakangan, selama plafon total belum penuh.
+    const size = iv.length + ct.length;
+    const eph = payload.eph === true;
+    if (!eph && totalBufferBytes + size <= MAX_TOTAL_BUFFER_BYTES) {
+      room.buffer.push(entry);
+      room.bufferBytes += size;
+      totalBufferBytes += size;
+      while (
+        room.buffer.length > 1 &&
+        (room.buffer.length > MAX_BUFFER_PER_ROOM || room.bufferBytes > MAX_BUFFER_BYTES)
+      ) {
+        const old = room.buffer.shift();
+        const oldSize = old.iv.length + old.ct.length;
+        room.bufferBytes -= oldSize;
+        totalBufferBytes -= oldSize;
+      }
     }
 
     io.to(roomId).emit("message", entry);
