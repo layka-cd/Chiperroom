@@ -4,8 +4,10 @@ const path = require("path");
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const { registerPreviewRoutes } = require("./preview");
 
 const app = express();
+registerPreviewRoutes(app); // pratinjau tautan (lihat preview.js)
 const server = http.createServer(app);
 const io = new Server(server, {
   // Halaman disajikan oleh server ini sendiri (same-origin), jadi CORS tidak diperlukan.
