@@ -612,6 +612,41 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
 .voice-bars i.on{ opacity: 1; background: var(--accent-text); }
 .voice-time{ min-width: 34px; text-align: right; font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
+
+/* tautan & pratinjau tautan */
+:root{ --pv-body: rgba(0,0,0,.24); }
+html[data-theme="light"]{ --pv-body: rgba(255,255,255,.62); }
+.msg-link{ color: var(--accent-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.msg-link:hover{ text-decoration-thickness: 2px; }
+.msg-bubble.has-preview{ padding: 4px; white-space: normal; width: min(340px, 100%); }
+.msg-bubble.has-preview .msg-text{ padding: 8px 10px 5px; white-space: pre-wrap; }
+.pv-card{ display: block; overflow: hidden; border-radius: 14px; color: inherit; text-decoration: none; background: var(--pv-body); transition: filter .15s ease; }
+.pv-card:hover{ filter: brightness(1.07); }
+.pv-img{ display: block; width: 100%; max-height: 220px; object-fit: cover; background: #fff; }
+.pv-body{ padding: 10px 12px 11px; }
+.pv-title{ font-size: 14.5px; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.pv-desc{ margin-top: 3px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.pv-foot{ display: flex; align-items: center; gap: 7px; margin-top: 8px; min-width: 0; font-size: 12.5px; color: var(--ink-3); }
+.pv-foot span{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-fav{ margin-left: auto; width: 16px; height: 16px; flex-shrink: 0; border-radius: 4px; }
+
+/* pratinjau di atas kolom ketik (sebelum dikirim) */
+.pv-compose{
+  display: none; align-items: center; gap: 12px; max-width: 820px; margin: 0 auto 8px; padding: 8px; border-radius: 18px; pointer-events: auto;
+  background: var(--glass-strong); border: 1px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), var(--shadow-sm);
+}
+.pv-compose.is-shown{ display: flex; }
+.pv-thumb{ width: 52px; height: 52px; flex-shrink: 0; overflow: hidden; display: grid; place-items: center; border-radius: 12px; background: var(--field); border: 1px solid var(--line); color: var(--ink-3); }
+.pv-thumb img{ display: block; width: 100%; height: 100%; object-fit: cover; }
+.pv-thumb.loading{ animation: pv-shimmer 1.2s ease-in-out infinite; }
+@keyframes pv-shimmer{ 50%{ opacity: .45; } }
+.pv-meta{ flex: 1; min-width: 0; }
+.pvc-title.t-text-swap{ display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14.5px; font-weight: 600; line-height: 1.35; }
+.pvc-domain{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--ink-3); }
+.pv-close{ width: 36px; height: 36px; border-radius: 10px; }
+
 /* toast */
 .toast-region{
   position: fixed; z-index: 120; left: 0; right: 0; bottom: calc(24px + env(safe-area-inset-bottom));
@@ -726,6 +761,7 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
   <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a.8.8 0 0 0 1.2.7l12-7.5a.8.8 0 0 0 0-1.4l-12-7.5A.8.8 0 0 0 7 4.5Z"/></symbol>
   <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
   <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
   <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <!-- Rak Atas -->
@@ -908,6 +944,14 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
         <button class="jump t-toast" id="btn-jump" type="button" tabindex="-1"><svg class="ico ico-sm"><use href="#i-arrow-down"/></svg>Pesan baru</button>
 
         <div class="composer-wrap" id="composer-wrap">
+          <div class="pv-compose t-toast" id="pv-compose" role="group" aria-label="Pratinjau tautan">
+            <div class="pv-thumb" id="pv-thumb" aria-hidden="true"></div>
+            <div class="pv-meta">
+              <span class="pvc-title t-text-swap" id="pv-title">Memuat pratinjau…</span>
+              <div class="pvc-domain" id="pv-domain"></div>
+            </div>
+            <button class="icon-btn pv-close" id="pv-close" type="button" aria-label="Hapus pratinjau tautan" title="Hapus pratinjau"><svg class="ico"><use href="#i-x"/></svg></button>
+          </div>
           <form class="composer" id="composer" autocomplete="off">
             <input type="file" id="image-input" accept="image/*" hidden>
             <button class="icon-btn" id="btn-image" type="button" aria-label="Kirim gambar" title="Kirim gambar"><svg class="ico"><use href="#i-image"/></svg></button>
@@ -1014,11 +1058,13 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
 
   // Texts reveal: putar ulang animasi masuk.
   function revealText(block){
+    cancelAnimationFrame(block._raf);
     block.classList.remove("is-hiding", "is-shown");
     void block.offsetHeight;
-    requestAnimationFrame(() => block.classList.add("is-shown"));
+    block._raf = requestAnimationFrame(() => block.classList.add("is-shown"));
   }
   function hideText(block, done){
+    cancelAnimationFrame(block._raf); // batalkan kemunculan yang masih tertunda (mencegah teks menyala lagi setelah disembunyikan)
     block.classList.add("is-hiding");
     block.classList.remove("is-shown");
     setTimeout(() => { block.classList.remove("is-hiding"); if(done) done(); }, 200);
@@ -1137,6 +1183,7 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
     const image = (typeof p.image === "string" && p.image.length < 600000 && /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(p.image)) ? p.image : "";
     const audio = (typeof p.audio === "string" && p.audio.length < 400000 && /^[A-Za-z0-9+/=]+$/.test(p.audio) &&
                    typeof p.amime === "string" && /^audio\/(webm|mp4|ogg|mpeg|aac)$/.test(p.amime)) ? p.audio : "";
+    const preview = sanitizePreview(p.preview);
     if(!text && !image && !audio) return null;
     return {
       user: typeof p.user === "string" && p.user.trim() ? p.user.slice(0, 24) : "Anonim",
@@ -1144,7 +1191,8 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
       ts: Number.isFinite(p.ts) ? p.ts : Date.now(),
       text, image,
       audio, amime: audio ? p.amime : "",
-      dur: audio && Number.isFinite(p.dur) ? Math.min(Math.max(p.dur, 0), 120) : 0
+      dur: audio && Number.isFinite(p.dur) ? Math.min(Math.max(p.dur, 0), 120) : 0,
+      preview
     };
   }
 
@@ -1212,7 +1260,13 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
     const bubble = el("div", "msg-bubble" + (msg.image ? " has-image" : ""));
     bubble.title = formatTime(msg.ts);
     if(msg.text){
-      const tx = el("div"); tx.textContent = msg.text; bubble.appendChild(tx);
+      if(msg.preview){
+        bubble.classList.add("has-preview");
+        const card = buildPreviewCard(msg.preview);
+        bubble.appendChild(card);
+        if(card._img) row._img = card._img;
+      }
+      const tx = el("div", msg.preview ? "msg-text" : ""); renderText(tx, msg.text); bubble.appendChild(tx);
     }
     if(msg.image){
       const btn = el("button", "img-btn");
@@ -1235,6 +1289,194 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
     row.appendChild(col);
     return row;
   }
+
+  // ---------------- Tautan ----------------
+  const TLDS = "com|net|org|id|co|io|app|dev|me|tv|info|xyz|link|ly|gl|be|to|ai|my|sg|us|uk|edu|gov|biz|site|online|store|page|cc|fm|ws";
+  const URL_RE = new RegExp("https?:\\/\\/[^\\s<>\"']+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+(?:" + TLDS + ")(?![a-z0-9-])(?::\\d{2,5})?(?:[/?#][^\\s<>\"']*)?", "gi");
+  function findLinks(text){
+    const out = [];
+    URL_RE.lastIndex = 0;
+    let m;
+    while((m = URL_RE.exec(text))){
+      let raw = m[0];
+      const start = m.index;
+      const hasScheme = /^https?:\/\//i.test(raw);
+      const prev = start > 0 ? text[start - 1] : "";
+      if(!hasScheme && /[@\w./-]/.test(prev)) continue; // bagian dari email atau kata lain
+      while(/[.,!?;:)\]}'"]$/.test(raw)) raw = raw.slice(0, -1);
+      if(!raw) continue;
+      let u;
+      try{ u = new URL(hasScheme ? raw : "https://" + raw); }catch(e){ continue; }
+      if(u.protocol !== "http:" && u.protocol !== "https:") continue;
+      out.push({ start, end: start + raw.length, raw, href: u.href });
+    }
+    return out;
+  }
+  function renderText(node, text){
+    let pos = 0;
+    for(const l of findLinks(text)){
+      if(l.start > pos) node.appendChild(document.createTextNode(text.slice(pos, l.start)));
+      const a = el("a", "msg-link");
+      a.href = l.href; a.target = "_blank"; a.rel = "noopener noreferrer nofollow";
+      a.textContent = l.raw;
+      node.appendChild(a);
+      pos = l.end;
+    }
+    if(pos < text.length) node.appendChild(document.createTextNode(text.slice(pos)));
+  }
+
+  // Pratinjau tautan dari anggota lain: periksa bentuknya sebelum dirender.
+  function sanitizePreview(p){
+    if(!p || typeof p !== "object") return null;
+    let url;
+    try{
+      const u = new URL(String(p.url || ""));
+      if((u.protocol !== "http:" && u.protocol !== "https:") || u.href.length > 600) return null;
+      url = u.href;
+    }catch(e){ return null; }
+    const s = (v, n) => typeof v === "string" ? v.slice(0, n) : "";
+    const img = (typeof p.img === "string" && p.img.length < 90000 && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.img)) ? p.img : "";
+    const ico = (typeof p.icon === "string" && p.icon.length < 12000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(p.icon)) ? p.icon : "";
+    const title = s(p.title, 140), desc = s(p.desc, 260);
+    if(!title && !desc && !img) return null;
+    return { url, title, desc, site: s(p.site, 60), domain: s(p.domain, 80) || new URL(url).hostname.replace(/^www\./, ""), img, icon: ico };
+  }
+  function buildPreviewCard(pv){
+    const a = el("a", "pv-card");
+    a.href = pv.url; a.target = "_blank"; a.rel = "noopener noreferrer nofollow";
+    if(pv.img){
+      const im = el("img", "pv-img");
+      im.alt = ""; im.decoding = "async"; im.src = pv.img;
+      a.appendChild(im); a._img = im;
+    }
+    const body = el("div", "pv-body");
+    if(pv.title){ const t = el("div", "pv-title"); t.textContent = pv.title; body.appendChild(t); }
+    if(pv.desc){ const d = el("div", "pv-desc"); d.textContent = pv.desc; body.appendChild(d); }
+    const foot = el("div", "pv-foot");
+    foot.appendChild(icon("i-link", "ico-sm"));
+    const dom = el("span"); dom.textContent = pv.domain; foot.appendChild(dom);
+    if(pv.icon){ const f = el("img", "pv-fav"); f.alt = ""; f.src = pv.icon; foot.appendChild(f); }
+    body.appendChild(foot);
+    a.appendChild(body);
+    return a;
+  }
+
+  // ---------------- Pratinjau tautan: sisi pengirim ----------------
+  // Dibuat di browser pengirim, lalu ikut terenkripsi di dalam pesan (penerima tidak menghubungi situs tujuan).
+  const pv = { url: "", token: 0, data: null, dismissed: "", timer: 0 };
+  const pvEl = $("pv-compose");
+  const hostOf = (u) => { try{ return new URL(u).hostname.replace(/^www\./, ""); }catch(e){ return ""; } };
+  function pvShow(){
+    clearTimeout(pvEl._t);
+    pvEl.classList.add("is-shown");
+    void pvEl.offsetWidth;
+    pvEl.classList.add("is-open");
+  }
+  function pvHide(){
+    if(!pvEl.classList.contains("is-shown")) return;
+    pvEl.classList.remove("is-open");
+    clearTimeout(pvEl._t);
+    pvEl._t = setTimeout(() => { if(!pvEl.classList.contains("is-open")) pvEl.classList.remove("is-shown"); }, cssMs("--toast-close", 250) + 30);
+  }
+  function pvFill(loading, url, d){
+    swapText($("pv-title"), loading ? "Memuat pratinjau…" : (d.title || d.domain));
+    $("pv-domain").textContent = loading ? hostOf(url) : d.domain;
+    const th = $("pv-thumb");
+    th.textContent = "";
+    th.classList.toggle("loading", loading);
+    if(!loading && d.img){ const im = el("img"); im.alt = ""; im.src = d.img; th.appendChild(im); }
+    else th.appendChild(icon("i-link"));
+  }
+  function resetPreview(clearDismissed){
+    clearTimeout(pv.timer);
+    pv.token++; pv.url = ""; pv.data = null;
+    if(clearDismissed) pv.dismissed = "";
+    pvHide();
+  }
+  function takePreviewFor(text){
+    const first = findLinks(text)[0];
+    return pv.data && first && first.href === pv.url ? pv.data : null;
+  }
+  function schedulePreview(){
+    clearTimeout(pv.timer);
+    pv.timer = setTimeout(checkPreview, 500);
+  }
+  function checkPreview(){
+    const first = findLinks(input.value)[0];
+    if(!first){ if(pv.url) resetPreview(true); else pv.dismissed = ""; return; }
+    if(first.href === pv.url || first.href === pv.dismissed) return;
+    startPreview(first.href);
+  }
+  async function apiJson(path){
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), 9000);
+    try{
+      const r = await fetch(path, { signal: c.signal, credentials: "omit" });
+      return r.ok ? await r.json() : null;
+    } finally { clearTimeout(t); }
+  }
+  async function apiBitmap(imageUrl){
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), 9000);
+    try{
+      const r = await fetch("/api/preview-image?u=" + encodeURIComponent(imageUrl), { signal: c.signal, credentials: "omit" });
+      if(!r.ok) throw new Error("image_failed");
+      return await loadBitmap(await r.blob());
+    } finally { clearTimeout(t); }
+  }
+  async function makeThumb(imageUrl){
+    const src = await apiBitmap(imageUrl);
+    if(src.width < 80 || src.height < 60) return "";
+    const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
+    for(const w of [480, 400, 320]){
+      const scale = Math.min(1, w / src.width);
+      canvas.width = Math.max(1, Math.round(src.width * scale));
+      canvas.height = Math.max(1, Math.round(src.height * scale));
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
+      for(const q of [0.64, 0.5, 0.4]){
+        const d = canvas.toDataURL("image/jpeg", q);
+        if(d.length <= 36000) return d;
+      }
+    }
+    return "";
+  }
+  async function makeIcon(iconUrl){
+    const src = await apiBitmap(iconUrl);
+    const c = document.createElement("canvas"); c.width = c.height = 32;
+    const x = c.getContext("2d");
+    const s = Math.min(32 / src.width, 32 / src.height);
+    x.drawImage(src, (32 - src.width * s) / 2, (32 - src.height * s) / 2, src.width * s, src.height * s);
+    const d = c.toDataURL("image/png");
+    return d.length <= 9000 ? d : "";
+  }
+  async function startPreview(url){
+    const token = ++pv.token;
+    pv.url = url; pv.data = null;
+    pvFill(true, url);
+    pvShow();
+    try{
+      const meta = await apiJson("/api/preview?url=" + encodeURIComponent(url));
+      if(token !== pv.token) return;
+      if(!meta || !meta.ok) throw new Error("no_preview");
+      // server lama (batas kecil) tidak sanggup membawa gambar: kirim teks pratinjau saja
+      const withImages = maxCt >= 100000;
+      const [img, ico] = await Promise.all([
+        withImages && meta.image ? makeThumb(meta.image).catch(() => "") : "",
+        withImages && meta.icon ? makeIcon(meta.icon).catch(() => "") : ""
+      ]);
+      if(token !== pv.token) return;
+      pv.data = { url: meta.url || url, title: meta.title || "", desc: meta.description || "", site: meta.site || "", domain: meta.domain || hostOf(url), img, icon: ico };
+      pvFill(false, url, pv.data);
+    }catch(e){
+      if(token === pv.token){ pv.data = null; pvHide(); } // gagal: kirim biasa, pv.url tetap supaya tidak diulang-ulang
+    }
+  }
+  $("pv-close").addEventListener("click", () => {
+    pv.dismissed = pv.url;
+    resetPreview(false);
+    input.focus();
+  });
 
   // ---------------- Voice note: pemutar ----------------
   let playingAudio = null;
@@ -1483,6 +1725,7 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
   }
 
   function leaveRoom(){
+    resetPreview(true);
     stopRecording(true);
     if(playingAudio){ playingAudio.pause(); playingAudio = null; }
     const s = socket; socket = null;
@@ -1512,8 +1755,9 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
       }
     });
   }
-  async function sendMessage(text){
+  async function sendMessage(text, preview){
     const payload = { uid: myUid, user: username, text, ts: Date.now() };
+    if(preview) payload.preview = preview;
     emitEncrypted(await encryptPayload(payload));
   }
 
@@ -1581,6 +1825,7 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
     sendBtn.title = label;
   }
   input.addEventListener("input", updateSend);
+  input.addEventListener("input", schedulePreview);
 
   // ---------------- Voice note: perekam ----------------
   // Ringan: MediaRecorder bawaan browser (Opus mono 16 kbps), tanpa library dan tanpa konversi di server.
@@ -1681,9 +1926,11 @@ body.in-chat .toast-region{ bottom: calc(118px + env(safe-area-inset-bottom)); }
     if(rec) return;
     const text = input.value.trim();
     if(!text || !connected()) return;
+    const preview = takePreviewFor(text);
     input.value = "";
     updateSend();
-    sendMessage(text);
+    resetPreview(true);
+    sendMessage(text, preview);
     input.focus();
   });
   $("btn-image").addEventListener("click", () => $("image-input").click());
